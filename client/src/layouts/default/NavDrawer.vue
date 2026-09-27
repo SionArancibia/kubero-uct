@@ -1,12 +1,41 @@
 <template>
+  <v-app-bar
+    v-if="!mdAndUp"
+    color="navBG"
+    density="compact"
+    elevation="0"
+    class="mobile-navigation-bar border-b"
+  >
+    <v-app-bar-nav-icon
+      data-testid="primary-navigation-open"
+      :aria-label="$t('navigation.openMainNavigation')"
+      @click="openPrimaryNavigation"
+    ></v-app-bar-nav-icon>
+    <v-app-bar-title class="mobile-navigation-title">Kubero UCT</v-app-bar-title>
+  </v-app-bar>
+
   <v-navigation-drawer
+      v-model="primaryOpen"
       class="primary-navigation-drawer"
       color="navBG"
-      permanent
-      rail
-      :width="256"
+      :permanent="mdAndUp"
+      :temporary="!mdAndUp"
+      :rail="mdAndUp"
+      :width="mdAndUp ? 256 : 320"
       :rail-width="56"
   >
+    <div v-if="!mdAndUp" class="mobile-drawer-header">
+      <span class="uct-section-title">{{ $t('navigation.mainNavigation') }}</span>
+      <v-btn
+        icon="mdi-close"
+        variant="text"
+        size="small"
+        data-testid="primary-navigation-close"
+        :aria-label="$t('navigation.closeMainNavigation')"
+        @click="closePrimaryNavigation"
+      ></v-btn>
+    </div>
+
     <v-list class="profile-dark-bg profile-header">
       <v-list-item
         link to="/profile"
@@ -239,6 +268,7 @@
     class="secondary-nav-scrim"
     data-testid="secondary-navigation-scrim"
     aria-hidden="true"
+    :style="secondaryScrimStyle"
     @click="closeSecondary"
   ></div>
 
@@ -257,17 +287,19 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { useTheme } from 'vuetify'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useDisplay, useTheme } from 'vuetify'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import SecondaryNavDrawer, { type SecondaryNavItem } from './SecondaryNavDrawer.vue'
 
 const theme = useTheme()
+const { mdAndUp } = useDisplay()
 const { t } = useI18n()
 const route = useRoute()
 
+const primaryOpen = ref(mdAndUp.value)
 const userAvatar = ref<string>('')
 const userName = ref<string>('')
 const userEmail = ref<string>('')
@@ -283,10 +315,15 @@ const isSettingsRoute = computed(() => settingsRoutes.includes(route.path))
 const secondaryOpen = computed(() => activeSecondary.value !== null)
 const secondaryId = computed(() => `secondary-nav-${activeSecondary.value ?? 'closed'}`)
 const secondaryStyle = computed(() => ({
-  top: `${secondaryTop.value}px`,
+  top: mdAndUp.value ? `${secondaryTop.value}px` : '0px',
   bottom: 'auto',
-  height: `${secondaryHeight.value}px`,
-  '--secondary-nav-header-height': `${secondaryHeaderHeight.value}px`,
+  height: mdAndUp.value ? `${secondaryHeight.value}px` : '100dvh',
+  '--secondary-nav-header-height': mdAndUp.value ? `${secondaryHeaderHeight.value}px` : '56px',
+  '--secondary-nav-left': mdAndUp.value ? '56px' : '0px',
+  '--secondary-nav-width': mdAndUp.value ? '256px' : 'min(100vw, 320px)',
+}))
+const secondaryScrimStyle = computed(() => ({
+  left: mdAndUp.value ? '312px' : 'min(100vw, 320px)',
 }))
 const secondaryTitle = computed(() => activeSecondary.value === 'settings'
   ? t('navigation.settings')
@@ -346,6 +383,22 @@ function openSecondary(group: 'settings' | 'documentation', event: Event) {
   })
 }
 
+function openPrimaryNavigation() {
+  primaryOpen.value = true
+  nextTick(() => {
+    document.querySelector<HTMLElement>('.primary-navigation-drawer .v-list-item')?.focus()
+  })
+}
+
+function closePrimaryNavigation() {
+  activeSecondary.value = null
+  activeTrigger.value = null
+  primaryOpen.value = false
+  nextTick(() => {
+    document.querySelector<HTMLElement>('[data-testid="primary-navigation-open"]')?.focus()
+  })
+}
+
 function syncSecondaryGeometry() {
   const drawer = document.querySelector<HTMLElement>('.primary-navigation-drawer')
   if (!drawer) return
@@ -371,6 +424,20 @@ function handleGlobalKeydown(event: KeyboardEvent) {
     closeSecondary()
   }
 }
+
+watch(mdAndUp, (isDesktop) => {
+  activeSecondary.value = null
+  activeTrigger.value = null
+  primaryOpen.value = isDesktop
+})
+
+watch(() => route.fullPath, () => {
+  if (!mdAndUp.value) {
+    activeSecondary.value = null
+    activeTrigger.value = null
+    primaryOpen.value = false
+  }
+})
 
 onMounted(() => {
   loadUserProfile()
@@ -445,6 +512,23 @@ export default defineComponent({
 
 <style scoped>
 
+.mobile-navigation-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.mobile-drawer-header {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px 8px 16px;
+  background: rgb(var(--v-theme-cardBackground));
+  border-bottom: 1px solid var(--uct-corp-gray-border);
+}
+
 img.image-icon {
     width: 23px; 
     height: 23px; 
@@ -492,7 +576,9 @@ img.image-icon {
 
 .secondary-nav-scrim {
   position: fixed;
-  inset: 0 0 0 312px;
+  top: 0;
+  right: 0;
+  bottom: 0;
   z-index: 1006;
   background: rgba(14, 22, 32, 0.22);
 }

@@ -149,10 +149,10 @@ test.describe('Navegación Transversal en el Dashboard de Kubero', () => {
     expect(secondaryHeaderDivider.y).toBe(primaryHeaderDivider.y);
     expect(mainAfter).toBe(mainBefore);
     await expect(navDrawer.settingsTrigger).toHaveAttribute('aria-expanded', 'true');
-    await expect(navDrawer.secondaryDrawer.getByRole('link', { name: 'General' })).toBeVisible();
-    await expect(navDrawer.secondaryDrawer.getByRole('link', { name: /Runpacks/i })).toBeVisible();
-    await expect(navDrawer.secondaryDrawer.getByRole('link', { name: /Tamaños de Pod|Pod Sizes/i })).toBeVisible();
-    await expect(navDrawer.secondaryDrawer.getByRole('link', { name: /Notificaciones|Notifications/i })).toBeVisible();
+    await expect(navDrawer.secondaryDrawer.getByText('General', { exact: true })).toBeVisible();
+    await expect(navDrawer.secondaryDrawer.getByText(/Runpacks/i, { exact: true })).toBeVisible();
+    await expect(navDrawer.secondaryDrawer.getByText(/Tamaños de Pod|Pod Sizes/i, { exact: true })).toBeVisible();
+    await expect(navDrawer.secondaryDrawer.getByText(/Notificaciones|Notifications/i, { exact: true })).toBeVisible();
   });
 
   test('Debe mantener un solo grupo abierto y exponer enlaces externos seguros', async ({ page }) => {
@@ -201,10 +201,49 @@ test.describe('Navegación Transversal en el Dashboard de Kubero', () => {
     await expect(navDrawer.settingsTrigger).toBeVisible({ timeout: 15000 });
 
     await navDrawer.openSettingsNavigation();
-    await navDrawer.secondaryDrawer.getByRole('link', { name: /Tamaños de Pod|Pod Sizes/i }).click();
+    await navDrawer.secondaryItem('/podsizes').click();
 
     await page.waitForURL('**/podsizes');
     await expect(navDrawer.secondaryDrawer).not.toBeVisible();
     await expect(navDrawer.settingsTrigger).toHaveClass(/v-list-item--active/);
+  });
+
+  test('Debe adaptar ambas barras a un viewport móvil sin reducir el área útil a una franja', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/profile');
+
+    const navDrawer = new NavDrawerPage(page);
+    await expect(navDrawer.primaryOpenBtn).toBeVisible({ timeout: 15000 });
+    await expect(navDrawer.drawer).not.toHaveClass(/v-navigation-drawer--active/);
+
+    await navDrawer.openPrimaryNavigation();
+
+    const primaryBox = await navDrawer.drawer.boundingBox();
+    if (!primaryBox) {
+      throw new Error('La navegación principal móvil debe tener geometría visible');
+    }
+    expect(primaryBox.x).toBe(0);
+    expect(primaryBox.width).toBe(320);
+    await expect(navDrawer.drawer.getByText(/Navegación principal|Main navigation/i)).toBeVisible();
+    await expect(navDrawer.settingsTrigger).toBeVisible();
+
+    const initialTheme = await navDrawer.getCurrentTheme();
+    await navDrawer.toggleTheme();
+    expect(await navDrawer.getCurrentTheme()).not.toBe(initialTheme);
+
+    await navDrawer.openSettingsNavigation();
+    const secondaryBox = await navDrawer.secondaryDrawer.boundingBox();
+    if (!secondaryBox) {
+      throw new Error('La navegación secundaria móvil debe tener geometría visible');
+    }
+    expect(Math.abs(secondaryBox.x)).toBeLessThan(1);
+    expect(secondaryBox.width).toBe(320);
+    expect(secondaryBox.width).toBeLessThan(page.viewportSize()!.width);
+    await expect(navDrawer.secondaryScrim).toBeVisible();
+
+    await navDrawer.closeSecondaryNavigation();
+    await expect(navDrawer.settingsTrigger).toBeFocused();
+    await navDrawer.closePrimaryNavigation();
+    await expect(navDrawer.primaryOpenBtn).toBeFocused();
   });
 });

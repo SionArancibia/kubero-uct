@@ -81,9 +81,10 @@ const route = useRoute()
   position: fixed;
   top: 0;
   bottom: 0;
-  left: 56px;
+  left: var(--secondary-nav-left, 56px);
   z-index: 1007;
-  width: 256px;
+  width: var(--secondary-nav-width, 256px);
+  max-width: 100vw;
   overflow-y: auto;
   color: rgb(var(--v-theme-on-background));
   background: rgb(var(--v-theme-navBG));

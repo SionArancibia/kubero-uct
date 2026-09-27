@@ -12,6 +12,8 @@ export class NavDrawerPage {
   readonly versionItemBtn: Locator;
   readonly versionDialog: Locator;
   readonly versionDialogCloseBtn: Locator;
+  readonly primaryOpenBtn: Locator;
+  readonly primaryCloseBtn: Locator;
 
   constructor(page: Page) {
     this.page = page;
@@ -27,6 +29,8 @@ export class NavDrawerPage {
     this.versionItemBtn = this.drawer.locator('.mdi-star').first();
     this.versionDialog = page.locator('.v-dialog');
     this.versionDialogCloseBtn = this.versionDialog.getByRole('button', { name: /ok|close/i });
+    this.primaryOpenBtn = page.getByTestId('primary-navigation-open');
+    this.primaryCloseBtn = page.getByTestId('primary-navigation-close');
   }
 
   async navigateTo(href: string) {
@@ -58,6 +62,23 @@ export class NavDrawerPage {
   async closeSecondaryNavigation() {
     await this.secondaryCloseBtn.click();
     await expect(this.secondaryDrawer).not.toBeVisible();
+  }
+
+  secondaryItem(href: string) {
+    return this.secondaryDrawer.locator(`[href="${href}"]`);
+  }
+
+  async openPrimaryNavigation() {
+    await expect(this.primaryOpenBtn).toBeVisible();
+    await this.primaryOpenBtn.click();
+    await expect(this.drawer).toHaveClass(/v-navigation-drawer--active/);
+    await expect.poll(async () => (await this.drawer.boundingBox())?.x).toBe(0);
+  }
+
+  async closePrimaryNavigation() {
+    await expect(this.primaryCloseBtn).toBeVisible();
+    await this.primaryCloseBtn.click();
+    await expect(this.drawer).not.toHaveClass(/v-navigation-drawer--active/);
   }
 
   async getCurrentTheme(): Promise<'light' | 'dark'> {
