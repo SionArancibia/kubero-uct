@@ -57,12 +57,22 @@
     <v-divider></v-divider>
 
     <v-list nav density="compact" active-color="primary">
-        <v-list-item 
-            link to="/"
-            prepend-icon="mdi-server"
-            v-if="authStore.hasPermission('pipeline:write') || authStore.hasPermission('pipeline:read')"
-            :title="$t('navigation.pipelines')">
-        </v-list-item>
+        <v-list-item
+          v-if="authStore.hasPermission('pipeline:write') || authStore.hasPermission('pipeline:read')"
+          id="nav-pipelines-trigger"
+          class="secondary-nav-trigger"
+          role="button"
+          tabindex="0"
+          data-testid="pipelines-navigation-trigger"
+          prepend-icon="mdi-server"
+          :title="$t('navigation.pipelines')"
+          :active="activeSecondary === 'pipelines' || isPipelineRoute"
+          :aria-expanded="activeSecondary === 'pipelines'"
+          aria-controls="secondary-nav-pipelines"
+          @click="openSecondary('pipelines', $event)"
+          @keydown.enter.prevent="openSecondary('pipelines', $event)"
+          @keydown.space.prevent="openSecondary('pipelines', $event)"
+        ></v-list-item>
         <v-list-item 
             link to="/templates" 
             v-if="kubero.templatesEnabled"
@@ -303,7 +313,9 @@ const primaryOpen = ref(mdAndUp.value)
 const userAvatar = ref<string>('')
 const userName = ref<string>('')
 const userEmail = ref<string>('')
-const activeSecondary = ref<'settings' | 'documentation' | null>(null)
+type SecondaryGroup = 'pipelines' | 'settings' | 'documentation'
+
+const activeSecondary = ref<SecondaryGroup | null>(null)
 const activeTrigger = ref<HTMLElement | null>(null)
 const secondaryTop = ref(0)
 const secondaryHeight = ref(0)
@@ -311,6 +323,8 @@ const secondaryHeaderHeight = ref(72)
 let drawerResizeObserver: ResizeObserver | null = null
 
 const settingsRoutes = ['/settings', '/runpacks', '/podsizes', '/notifications']
+const isAdmin = computed(() => authStore.role === 'admin')
+const isPipelineRoute = computed(() => route.path === '/' || route.path === '/overview' || route.path.startsWith('/pipeline/'))
 const isSettingsRoute = computed(() => settingsRoutes.includes(route.path))
 const secondaryOpen = computed(() => activeSecondary.value !== null)
 const secondaryId = computed(() => `secondary-nav-${activeSecondary.value ?? 'closed'}`)
@@ -325,9 +339,18 @@ const secondaryStyle = computed(() => ({
 const secondaryScrimStyle = computed(() => ({
   left: mdAndUp.value ? '312px' : 'min(100vw, 320px)',
 }))
-const secondaryTitle = computed(() => activeSecondary.value === 'settings'
-  ? t('navigation.settings')
-  : t('navigation.documentation'))
+const secondaryTitle = computed(() => {
+  if (activeSecondary.value === 'pipelines') return t('navigation.pipelines')
+  if (activeSecondary.value === 'settings') return t('navigation.settings')
+  return t('navigation.documentation')
+})
+
+const pipelineItems = computed<SecondaryNavItem[]>(() => [
+  ...(isAdmin.value
+    ? [{ id: 'overview', title: t('navigation.overview'), icon: 'mdi-view-dashboard-outline', to: '/overview' }]
+    : []),
+  { id: 'pipelines', title: t('navigation.pipelines'), icon: 'mdi-source-branch', to: '/' },
+])
 
 const settingsItems = computed<SecondaryNavItem[]>(() => [
   { id: 'general', title: t('navigation.general'), icon: 'mdi-tune', to: '/settings' },
@@ -351,9 +374,11 @@ const documentationItems = computed<SecondaryNavItem[]>(() => [
   },
 ])
 
-const secondaryItems = computed(() => activeSecondary.value === 'settings'
-  ? settingsItems.value
-  : documentationItems.value)
+const secondaryItems = computed(() => {
+  if (activeSecondary.value === 'pipelines') return pipelineItems.value
+  if (activeSecondary.value === 'settings') return settingsItems.value
+  return documentationItems.value
+})
 
 async function loadUserProfile() {
   try {
@@ -368,7 +393,7 @@ async function loadUserProfile() {
   }
 }
 
-function openSecondary(group: 'settings' | 'documentation', event: Event) {
+function openSecondary(group: SecondaryGroup, event: Event) {
   if (activeSecondary.value === group) {
     closeSecondary()
     return
@@ -499,6 +524,7 @@ export default defineComponent({
             //localStorage.removeItem("kubero.JWT_TOKEN");
             // Remove cookie
             cookies.remove("kubero.JWT_TOKEN");
+            authStore.reset()
             router.push("/login")
         },
     },

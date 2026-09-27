@@ -352,7 +352,7 @@ export default defineComponent({
     }}, 
     computed: {
       isAdmin(): boolean {
-        return this.authStore.userGroups.includes('admin');
+        return this.authStore.role === 'admin';
       },
       // 'everyone' no se preselecciona: haría el pipeline visible para todos los usuarios
       defaultTeams(): string[] {

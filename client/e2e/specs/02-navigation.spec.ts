@@ -3,6 +3,7 @@ import { NavDrawerPage } from '../page-objects/nav-drawer.page';
 
 test.describe('Navegación Transversal en el Dashboard de Kubero', () => {
   const routesToTest = [
+    { path: '/overview', name: 'Overview' },
     { path: '/', name: 'Pipelines' },
     { path: '/templates', name: 'Templates' },
     { path: '/activity', name: 'Activity' },
@@ -121,7 +122,7 @@ test.describe('Navegación Transversal en el Dashboard de Kubero', () => {
     await expect(navDrawer.settingsTrigger).toBeVisible({ timeout: 15000 });
 
     const mainBefore = await page.locator('.v-main').evaluate((element) => getComputedStyle(element).paddingLeft);
-    const regularItemBox = await navDrawer.drawer.locator('a[href="/"]').first().boundingBox();
+    const regularItemBox = await navDrawer.drawer.locator('a[href="/addons"]').first().boundingBox();
     const settingsItemBox = await navDrawer.settingsTrigger.boundingBox();
     if (!regularItemBox || !settingsItemBox) {
       throw new Error('Los elementos regulares y secundarios deben tener geometría visible');
@@ -153,6 +154,24 @@ test.describe('Navegación Transversal en el Dashboard de Kubero', () => {
     await expect(navDrawer.secondaryDrawer.getByText(/Runpacks/i, { exact: true })).toBeVisible();
     await expect(navDrawer.secondaryDrawer.getByText(/Tamaños de Pod|Pod Sizes/i, { exact: true })).toBeVisible();
     await expect(navDrawer.secondaryDrawer.getByText(/Notificaciones|Notifications/i, { exact: true })).toBeVisible();
+  });
+
+  test('Debe abrir la navegación de Pipelines y mostrar Overview solo al administrador', async ({ page }) => {
+    await page.goto('/profile');
+    const navDrawer = new NavDrawerPage(page);
+    await expect(navDrawer.pipelinesTrigger).toBeVisible({ timeout: 15000 });
+
+    await navDrawer.openPipelinesNavigation();
+
+    await expect(navDrawer.pipelinesTrigger).toHaveAttribute('aria-expanded', 'true');
+    await expect(navDrawer.secondaryDrawer).toHaveAttribute('id', 'secondary-nav-pipelines');
+    await expect(navDrawer.secondaryItem('/overview')).toBeVisible();
+    await expect(navDrawer.secondaryItem('/')).toBeVisible();
+
+    await navDrawer.secondaryItem('/overview').click();
+    await page.waitForURL('**/overview');
+    await expect(navDrawer.secondaryDrawer).not.toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
   });
 
   test('Debe mantener un solo grupo abierto y exponer enlaces externos seguros', async ({ page }) => {

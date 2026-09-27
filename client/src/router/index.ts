@@ -1,6 +1,7 @@
 // Composables
 import { createRouter, createWebHistory, RouteLocationNormalized } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useCookies } from 'vue3-cookies'
 
 const routes = [
   {
@@ -14,6 +15,12 @@ const routes = [
         // this generates a separate chunk (Pipeline-[hash].js) for this route
         // which is lazy-loaded when the route is visited.
         component: () => import('@/views/Pipeline.vue'),
+      },
+      {
+        path: '/overview',
+        name: 'Overview',
+        meta: { requiresAdmin: true },
+        component: () => import('@/views/Overview.vue'),
       },
       {
         path: '/pipeline/:pipeline',
@@ -189,6 +196,19 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes,
+})
+
+router.beforeEach((to) => {
+  const authStore = useAuthStore()
+
+  const { cookies } = useCookies()
+  const token = cookies.get('kubero.JWT_TOKEN')
+  if (token && token !== authStore.token) authStore.loadToken(token)
+  if (!token && authStore.token) authStore.reset()
+
+  if (to.meta.requiresAdmin && authStore.role !== 'admin') {
+    return { name: 'Pipelines' }
+  }
 })
 
 /* Forced Permission redirect

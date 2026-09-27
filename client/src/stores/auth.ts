@@ -5,6 +5,7 @@ import { jwtDecode } from 'jwt-decode'
 interface JwtPayload {
   userId: string
   username: string
+  role: string
   permissions: string[]
   exp: number
   [key: string]: any
@@ -16,6 +17,7 @@ export const useAuthStore = defineStore('auth', {
     permissions: [] as string[],
     userId: '' as string,
     username: '' as string,
+    role: '' as string,
     userGroups: [] as string[],
   }),
 
@@ -27,6 +29,7 @@ export const useAuthStore = defineStore('auth', {
         this.permissions = decoded.permissions || []
         this.userId = decoded.userId
         this.username = decoded.username || ''
+        this.role = decoded.role || ''
         this.userGroups = decoded.userGroups || []
       } catch (e) {
         console.error('Failed to decode JWT Token', e)
@@ -38,6 +41,9 @@ export const useAuthStore = defineStore('auth', {
       this.token = ''
       this.permissions = []
       this.userId = ''
+      this.username = ''
+      this.role = ''
+      this.userGroups = []
     },
   },
   getters: {

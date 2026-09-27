@@ -8,6 +8,7 @@ export class NavDrawerPage {
   readonly settingsTrigger: Locator;
   readonly documentationTrigger: Locator;
   readonly secondaryCloseBtn: Locator;
+  readonly pipelinesTrigger: Locator;
   readonly themeToggleBtn: Locator;
   readonly versionItemBtn: Locator;
   readonly versionDialog: Locator;
@@ -23,6 +24,7 @@ export class NavDrawerPage {
     this.settingsTrigger = page.getByTestId('settings-navigation-trigger');
     this.documentationTrigger = page.getByTestId('documentation-navigation-trigger');
     this.secondaryCloseBtn = page.getByTestId('secondary-navigation-close');
+    this.pipelinesTrigger = page.getByTestId('pipelines-navigation-trigger');
     this.themeToggleBtn = this.drawer.locator('.v-list-item').filter({
       has: page.locator('.mdi-theme-light-dark'),
     });
@@ -50,6 +52,12 @@ export class NavDrawerPage {
   async openSettingsNavigation() {
     await this.settingsTrigger.scrollIntoViewIfNeeded();
     await this.settingsTrigger.click();
+    await expect(this.secondaryDrawer).toBeVisible();
+  }
+
+  async openPipelinesNavigation() {
+    await this.pipelinesTrigger.scrollIntoViewIfNeeded();
+    await this.pipelinesTrigger.click();
     await expect(this.secondaryDrawer).toBeVisible();
   }
 
