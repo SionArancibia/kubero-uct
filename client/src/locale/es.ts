@@ -254,21 +254,27 @@ const messages = {
     },
   },
   profile: {
+    description: 'Administra tu identidad, preferencias de acceso y credenciales personales de API.',
+    accountDescription: 'Revisa la información de cuenta utilizada en Kubero UCT.',
+    language: 'Idioma de la interfaz',
     titles: {
       apiTokens: 'Tokens de API',
       profileDetails: 'Detalles del perfil',
+      accountInformation: 'Información de la cuenta',
     },
     avatar: {
+      alt: 'Avatar del perfil',
       edit: 'Editar avatar',
       limitMessage: 'La imagen no debe superar los 100KB.',
       uploadAvatar: 'Subir nuevo avatar',
     },
     token: {
+      description: 'Crea y administra credenciales para acceder a tu cuenta mediante la API.',
       create: 'Crear token',
       expiresAt: 'Expira en',
       noTokens: 'No se encontraron tokens.',
       details: 'Detalles del token',
-      warningMessage: 'Este token <strong>no se volverá a mostrar</strong>. Cópialo y guárdalo en un lugar seguro ahora.',
+      warningMessage: 'Este token no se volverá a mostrar. Cópialo y guárdalo en un lugar seguro ahora.',
       copyToken: 'Copiar token',
       copiedMessage: '¡Token copiado al portapapeles!',
       close: 'Cerrar',

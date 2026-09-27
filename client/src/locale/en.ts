@@ -256,21 +256,27 @@ const messages = {
         },
       },
       profile: {
+        description: 'Manage your identity, access preferences, and personal API credentials.',
+        accountDescription: 'Review the account information used across Kubero UCT.',
+        language: 'Interface language',
         titles: {
           apiTokens: 'API Tokens',
           profileDetails: 'Profile Details',
+          accountInformation: 'Account information',
         },
         avatar: {
+          alt: 'Profile avatar',
           edit: 'Edit Avatar',
           limitMessage: 'The image must not exceed 100KB.',
           uploadAvatar: 'Upload new Avatar',
         },
         token: {
+          description: 'Create and manage credentials for programmatic access to your account.',
           create: 'Create Token',
           expiresAt: 'Expires At',
           noTokens: 'No tokens found.',
           details: 'Token Details',
-          warningMessage: 'This token will <strong>not be shown again</strong>. Please copy and store it securely now.',
+          warningMessage: 'This token will not be shown again. Please copy and store it securely now.',
           copyToken: 'Copy Token',
           copiedMessage: 'Token copied to clipboard!',
           close: 'Close',
