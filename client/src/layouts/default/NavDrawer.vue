@@ -1,26 +1,13 @@
 <template>
   <v-navigation-drawer
+      class="primary-navigation-drawer"
       color="navBG"
-      expand-on-hover
       permanent
-      :rail="rail"
+      rail
+      :width="256"
+      :rail-width="56"
   >
-    <!-- Cabecera Institucional UCT -->
-    <div class="nav-brand-header py-3 px-2 text-center">
-      <router-link to="/" class="d-block">
-        <v-img
-          src="@/assets/logouct-header.png"
-          max-height="42"
-          max-width="170"
-          class="mx-auto"
-          alt="UCT"
-          contain
-        ></v-img>
-      </router-link>
-    </div>
-    <v-divider></v-divider>
-
-    <v-list class="profile-dark-bg">
+    <v-list class="profile-dark-bg profile-header">
       <v-list-item
         link to="/profile"
       >
@@ -34,22 +21,6 @@
         </template>
         <template #subtitle>
           {{ userEmail }}
-        </template>
-        <template v-slot:append>
-          <v-btn
-            v-if="rail"
-            icon="mdi-chevron-right"
-            variant="text"
-            aria-label="Expand navigation"
-            @click="rail = false"
-          ></v-btn>
-          <v-btn
-            v-else
-            icon="mdi-chevron-left"
-            variant="text"
-            aria-label="Collapse navigation"
-            @click="rail = true"
-          ></v-btn>
         </template>
       </v-list-item>
     </v-list>
@@ -86,48 +57,22 @@
             prepend-icon="mdi-account-outline"
             :title="$t('navigation.accounts')">
         </v-list-item>
-        <!-- Settings subsection -->
-        <v-list-group
+        <v-list-item
           v-if="kubero.isAuthenticated && !kubero.adminDisabled && (authStore.hasPermission('config:write') || authStore.hasPermission('config:read'))"
-          v-model="settingsOpen"
+          class="secondary-nav-trigger"
+          role="button"
+          tabindex="0"
+          id="nav-settings-trigger"
+          data-testid="settings-navigation-trigger"
           prepend-icon="mdi-cog-outline"
-          value="settings"
-        >
-          <template #activator="{ props }">
-            <v-list-item v-bind="props" :title="$t('navigation.settings')"></v-list-item>
-          </template>
-          <v-list-item
-            link to="/settings"
-            :title="$t('navigation.general')"
-            prepend-icon="mdi-tune"
-            density="compact"
-            class="nav-subitem"
-          ></v-list-item>
-          <v-list-item
-              link to="/runpacks" 
-              v-if="kubero.isAuthenticated && !kubero.adminDisabled"
-              prepend-icon="mdi-cube-outline"
-              density="compact"
-              class="nav-subitem"
-              :title="$t('navigation.runpacks')">
-          </v-list-item>
-          <v-list-item 
-              link to="/podsizes" 
-              v-if="kubero.isAuthenticated && !kubero.adminDisabled"
-              prepend-icon="mdi-arrow-expand-vertical"
-              density="compact"
-              class="nav-subitem"
-              :title="$t('navigation.podSizes')">
-          </v-list-item>
-          <v-list-item 
-              link to="/notifications" 
-              v-if="kubero.isAuthenticated && !kubero.adminDisabled"
-              prepend-icon="mdi-email-fast-outline"
-              density="compact"
-              class="nav-subitem"
-              :title="$t('navigation.notifications')">
-          </v-list-item>
-        </v-list-group>
+          :title="$t('navigation.settings')"
+          :active="activeSecondary === 'settings' || isSettingsRoute"
+          :aria-expanded="activeSecondary === 'settings'"
+          aria-controls="secondary-nav-settings"
+          @click="openSecondary('settings', $event)"
+          @keydown.enter.prevent="openSecondary('settings', $event)"
+          @keydown.space.prevent="openSecondary('settings', $event)"
+        ></v-list-item>
     </v-list>
 
 
@@ -145,31 +90,21 @@
                 prepend-icon="mdi-api"
                 :title="$t('navigation.kuberoAPI')">
             </v-list-item>
-            <v-list-group
-                value="documentation"
-                prepend-icon="mdi-book-open-variant">
-                <template #activator="{ props }">
-                    <v-list-item v-bind="props" :title="$t('navigation.documentation')"></v-list-item>
-                </template>
-                <v-list-item
-                    link href="https://www.kubero.dev/docs"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    prepend-icon="mdi-book-open-variant"
-                    density="compact"
-                    class="nav-subitem"
-                    :title="$t('navigation.kuberoDocumentation')">
-                </v-list-item>
-                <v-list-item
-                    link href="https://benjaminespinozafk.github.io/kubero-uct-docs/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    prepend-icon="mdi-school"
-                    density="compact"
-                    class="nav-subitem"
-                    :title="$t('navigation.workflowsUCT')">
-                </v-list-item>
-            </v-list-group>
+            <v-list-item
+                class="secondary-nav-trigger"
+                role="button"
+                tabindex="0"
+                id="nav-documentation-trigger"
+                data-testid="documentation-navigation-trigger"
+                prepend-icon="mdi-book-open-variant"
+                :title="$t('navigation.documentation')"
+                :active="activeSecondary === 'documentation'"
+                :aria-expanded="activeSecondary === 'documentation'"
+                aria-controls="secondary-nav-documentation"
+                @click="openSecondary('documentation', $event)"
+                @keydown.enter.prevent="openSecondary('documentation', $event)"
+                @keydown.space.prevent="openSecondary('documentation', $event)"
+            ></v-list-item>
             <v-list-item 
                 link href="https://github.com/kubero-dev/kubero" 
                 target="_blank"
@@ -298,18 +233,90 @@
       </v-card>
     </v-dialog>
   </v-navigation-drawer>
+
+  <div
+    v-if="secondaryOpen"
+    class="secondary-nav-scrim"
+    data-testid="secondary-navigation-scrim"
+    aria-hidden="true"
+    @click="closeSecondary"
+  ></div>
+
+  <transition name="secondary-nav-slide">
+    <secondary-nav-drawer
+      v-if="activeSecondary"
+      :id="secondaryId"
+      :title="secondaryTitle"
+      :close-label="$t('navigation.closeSubnavigation', { section: secondaryTitle })"
+      :items="secondaryItems"
+      :style="secondaryStyle"
+      @close="closeSecondary"
+      @select="closeSecondary"
+    />
+  </transition>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useTheme } from 'vuetify'
+import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 import axios from 'axios'
+import SecondaryNavDrawer, { type SecondaryNavItem } from './SecondaryNavDrawer.vue'
+
 const theme = useTheme()
+const { t } = useI18n()
+const route = useRoute()
 
 const userAvatar = ref<string>('')
 const userName = ref<string>('')
 const userEmail = ref<string>('')
-const rail = ref(true)
+const activeSecondary = ref<'settings' | 'documentation' | null>(null)
+const activeTrigger = ref<HTMLElement | null>(null)
+const secondaryTop = ref(0)
+const secondaryHeight = ref(0)
+const secondaryHeaderHeight = ref(72)
+let drawerResizeObserver: ResizeObserver | null = null
+
+const settingsRoutes = ['/settings', '/runpacks', '/podsizes', '/notifications']
+const isSettingsRoute = computed(() => settingsRoutes.includes(route.path))
+const secondaryOpen = computed(() => activeSecondary.value !== null)
+const secondaryId = computed(() => `secondary-nav-${activeSecondary.value ?? 'closed'}`)
+const secondaryStyle = computed(() => ({
+  top: `${secondaryTop.value}px`,
+  bottom: 'auto',
+  height: `${secondaryHeight.value}px`,
+  '--secondary-nav-header-height': `${secondaryHeaderHeight.value}px`,
+}))
+const secondaryTitle = computed(() => activeSecondary.value === 'settings'
+  ? t('navigation.settings')
+  : t('navigation.documentation'))
+
+const settingsItems = computed<SecondaryNavItem[]>(() => [
+  { id: 'general', title: t('navigation.general'), icon: 'mdi-tune', to: '/settings' },
+  { id: 'runpacks', title: t('navigation.runpacks'), icon: 'mdi-cube-outline', to: '/runpacks' },
+  { id: 'podsizes', title: t('navigation.podSizes'), icon: 'mdi-arrow-expand-vertical', to: '/podsizes' },
+  { id: 'notifications', title: t('navigation.notifications'), icon: 'mdi-email-fast-outline', to: '/notifications' },
+])
+
+const documentationItems = computed<SecondaryNavItem[]>(() => [
+  {
+    id: 'kubero-documentation',
+    title: t('navigation.kuberoDocumentation'),
+    icon: 'mdi-book-open-variant',
+    href: 'https://www.kubero.dev/docs',
+  },
+  {
+    id: 'uct-workflows',
+    title: t('navigation.workflowsUCT'),
+    icon: 'mdi-school',
+    href: 'https://benjaminespinozafk.github.io/kubero-uct-docs/',
+  },
+])
+
+const secondaryItems = computed(() => activeSecondary.value === 'settings'
+  ? settingsItems.value
+  : documentationItems.value)
 
 async function loadUserProfile() {
   try {
@@ -324,8 +331,66 @@ async function loadUserProfile() {
   }
 }
 
+function openSecondary(group: 'settings' | 'documentation', event: Event) {
+  if (activeSecondary.value === group) {
+    closeSecondary()
+    return
+  }
+
+  activeTrigger.value = event.currentTarget as HTMLElement
+  activeSecondary.value = group
+
+  nextTick(() => {
+    syncSecondaryGeometry()
+    document.querySelector<HTMLElement>(`#secondary-nav-${group} .v-list-item`)?.focus()
+  })
+}
+
+function syncSecondaryGeometry() {
+  const drawer = document.querySelector<HTMLElement>('.primary-navigation-drawer')
+  if (!drawer) return
+
+  const rect = drawer.getBoundingClientRect()
+  const profileHeader = drawer.querySelector<HTMLElement>('.profile-header')
+  secondaryTop.value = rect.top
+  secondaryHeight.value = rect.height
+  secondaryHeaderHeight.value = profileHeader?.getBoundingClientRect().height ?? 72
+}
+
+function closeSecondary() {
+  if (!activeSecondary.value) return
+
+  const trigger = activeTrigger.value
+  activeSecondary.value = null
+  nextTick(() => trigger?.focus())
+}
+
+function handleGlobalKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape' && secondaryOpen.value) {
+    event.preventDefault()
+    closeSecondary()
+  }
+}
+
 onMounted(() => {
   loadUserProfile()
+  window.addEventListener('keydown', handleGlobalKeydown)
+  window.addEventListener('resize', syncSecondaryGeometry)
+
+  const drawer = document.querySelector<HTMLElement>('.primary-navigation-drawer')
+  if (drawer) {
+    drawerResizeObserver = new ResizeObserver(syncSecondaryGeometry)
+    drawerResizeObserver.observe(drawer)
+    const profileHeader = drawer.querySelector<HTMLElement>('.profile-header')
+    if (profileHeader) drawerResizeObserver.observe(profileHeader)
+    syncSecondaryGeometry()
+  }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', handleGlobalKeydown)
+  window.removeEventListener('resize', syncSecondaryGeometry)
+  drawerResizeObserver?.disconnect()
 })
 
 function toggleTheme() {
@@ -357,7 +422,6 @@ export default defineComponent({
         templatesEnabled: false,
         session: false,
         debugDialog: false,
-        settingsOpen: false // Controls collapse state
         }
     },
     computed: {
@@ -426,30 +490,35 @@ img.image-icon {
   background: rgba(var(--v-theme-secondary), 0.5) !important;
 }
 
-.nav-subitem {
-  font-size: 0.85rem !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-  overflow-x: hidden !important;
+.secondary-nav-scrim {
+  position: fixed;
+  inset: 0 0 0 312px;
+  z-index: 1006;
+  background: rgba(14, 22, 32, 0.22);
+}
+
+.secondary-nav-slide-enter-active,
+.secondary-nav-slide-leave-active {
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+.secondary-nav-slide-enter-from,
+.secondary-nav-slide-leave-to {
+  opacity: 0;
+  transform: translateX(-16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .secondary-nav-slide-enter-active,
+  .secondary-nav-slide-leave-active {
+    transition: none;
+  }
 }
 </style>
 
 <style>
 .v-navigation-drawer,
 .v-navigation-drawer__content {
-  overflow-x: hidden !important;
-}
-
-.v-list-group__items {
-  --indent-padding: 0px !important;
-  overflow-x: hidden !important;
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-.v-list-group__items .v-list-item {
-  max-width: 100% !important;
-  box-sizing: border-box !important;
   overflow-x: hidden !important;
 }
 </style>

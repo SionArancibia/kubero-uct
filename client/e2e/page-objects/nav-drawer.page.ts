@@ -3,6 +3,11 @@ import { Page, Locator, expect } from '@playwright/test';
 export class NavDrawerPage {
   readonly page: Page;
   readonly drawer: Locator;
+  readonly secondaryDrawer: Locator;
+  readonly secondaryScrim: Locator;
+  readonly settingsTrigger: Locator;
+  readonly documentationTrigger: Locator;
+  readonly secondaryCloseBtn: Locator;
   readonly themeToggleBtn: Locator;
   readonly versionItemBtn: Locator;
   readonly versionDialog: Locator;
@@ -11,6 +16,11 @@ export class NavDrawerPage {
   constructor(page: Page) {
     this.page = page;
     this.drawer = page.locator('.v-navigation-drawer');
+    this.secondaryDrawer = page.getByTestId('secondary-navigation');
+    this.secondaryScrim = page.getByTestId('secondary-navigation-scrim');
+    this.settingsTrigger = page.getByTestId('settings-navigation-trigger');
+    this.documentationTrigger = page.getByTestId('documentation-navigation-trigger');
+    this.secondaryCloseBtn = page.getByTestId('secondary-navigation-close');
     this.themeToggleBtn = this.drawer.locator('.v-list-item').filter({
       has: page.locator('.mdi-theme-light-dark'),
     });
@@ -31,6 +41,23 @@ export class NavDrawerPage {
     await this.themeToggleBtn.click();
     // Breve pausa para permitir la transición de tema en Vuetify
     await this.page.waitForTimeout(400);
+  }
+
+  async openSettingsNavigation() {
+    await this.settingsTrigger.scrollIntoViewIfNeeded();
+    await this.settingsTrigger.click();
+    await expect(this.secondaryDrawer).toBeVisible();
+  }
+
+  async openDocumentationNavigation() {
+    await this.documentationTrigger.scrollIntoViewIfNeeded();
+    await this.documentationTrigger.click();
+    await expect(this.secondaryDrawer).toBeVisible();
+  }
+
+  async closeSecondaryNavigation() {
+    await this.secondaryCloseBtn.click();
+    await expect(this.secondaryDrawer).not.toBeVisible();
   }
 
   async getCurrentTheme(): Promise<'light' | 'dark'> {

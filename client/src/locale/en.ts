@@ -17,6 +17,7 @@ const messages = {
         theme: 'Dark/Light Mode',
         kuberoAPI: 'Kubero API',
         documentation: 'Documentation',
+        closeSubnavigation: 'Close {section} navigation',
         kuberoDocumentation: 'Kubero documentation',
         workflowsUCT: 'Workflows UCT',
         github: 'GitHub',
