@@ -261,6 +261,8 @@ const messages = {
           warning: 'Please change all passwords, tokens and select the correct storageClass for your cluster.',
           appName: 'App Name',
           domain: 'Domain',
+          addDomain: 'Add domain',
+          removeDomain: 'Remove domain',
           containerPort: 'Container Port',
           strategy: 'Strategy',
           advancedAppConfig: 'Advanced App Configuration',

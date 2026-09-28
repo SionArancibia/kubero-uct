@@ -261,6 +261,8 @@ const messages = {
       warning: 'Por favor, cambia todas las contraseñas, tokens y selecciona la storageClass correcta para tu clúster.',
       appName: 'Nombre de la app',
       domain: 'Dominio',
+      addDomain: 'Añadir dominio',
+      removeDomain: 'Eliminar dominio',
       containerPort: 'Puerto del contenedor',
       strategy: 'Estrategia',
       advancedAppConfig: 'Configuración avanzada de la aplicación',
