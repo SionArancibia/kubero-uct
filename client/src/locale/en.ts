@@ -541,6 +541,7 @@ const messages = {
         helpTitle: 'What are Notifications?',
         helpText: '<p><strong>Notifications</strong> allow you to receive alerts about events in your Kubero applications. You can configure Slack, Discord, or webhook notifications to stay informed about deployments, errors, and other important events.</p><p class="mt-2"><a href="https://www.kubero.dev/docs/usermanual/notifications/" target="_blank" rel="noopener">Read more in the Kubero documentation</a></p>',
         form: {
+          search: 'Search notifications',
           name: 'Name',
           type: 'Type',
           enabled: 'Enabled',
@@ -574,6 +575,7 @@ const messages = {
         helpTitle: 'What are PodSizes?',
         helpText: '<p><strong>PodSizes</strong> define the resource requests and limits for your application\'s pods in Kubero. You can create, edit, and delete pod sizes to match your workload requirements.</p><p class="mt-2"><a href="https://www.kubero.dev/docs/usermanual/podsizes/" target="_blank" rel="noopener">Read more in the Kubero documentation</a></p>',
         form: {
+          search: 'Search pod sizes',
           name: 'Pod Size Name',
           description: 'Description',
           cpuRequest: 'CPU Request (m)',

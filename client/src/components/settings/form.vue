@@ -1,35 +1,52 @@
 <template>
-  <v-form>
-    <v-container>
-      <v-tabs v-model="tab" style="margin-bottom: 30px">
-        <v-tab value="general">{{ $t('settings.tabs.general') }}</v-tab>
-        <v-tab value="deployment">{{ $t('settings.tabs.deployment') }}</v-tab>
-        <v-tab value="templates">{{ $t('settings.tabs.templates') }}</v-tab>
-      </v-tabs>
+  <v-form class="uct-management-form">
+    <v-container class="uct-management-page uct-settings-page">
+      <header class="uct-page-header">
+        <div class="uct-page-header__identity">
+          <div class="uct-page-header__icon" aria-hidden="true">
+            <v-icon size="28" color="primary">mdi-tune-variant</v-icon>
+          </div>
+          <h1 class="uct-h1">{{ $t('navigation.settings') }}</h1>
+        </div>
+      </header>
 
-      <v-window v-model="tab">
-        <v-window-item value="general">
-          <FormGeneral
-            :settings="settings.settings"
-            :secrets="settings.secrets"
-          ></FormGeneral>
-        </v-window-item>
+      <v-card color="cardBackground" class="uct-card uct-settings-surface" elevation="0">
+        <v-tabs v-model="tab" class="uct-settings-tabs" color="primary" show-arrows>
+          <v-tab value="general" prepend-icon="mdi-cog-outline">{{ $t('settings.tabs.general') }}</v-tab>
+          <v-tab value="deployment" prepend-icon="mdi-rocket-launch-outline">{{ $t('settings.tabs.deployment') }}</v-tab>
+          <v-tab value="templates" prepend-icon="mdi-view-grid-outline">{{ $t('settings.tabs.templates') }}</v-tab>
+        </v-tabs>
+        <v-divider></v-divider>
 
-        <v-window-item value="deployment">
-          <FormDeployment :settings="settings"></FormDeployment>
-        </v-window-item>
+        <v-window v-model="tab" class="uct-settings-window">
+          <v-window-item value="general">
+            <FormGeneral
+              :settings="settings.settings"
+              :secrets="settings.secrets"
+            ></FormGeneral>
+          </v-window-item>
 
-        <v-window-item value="templates">
-          <FormTemplates :settings="settings.settings"></FormTemplates>
-        </v-window-item>
-      </v-window>
+          <v-window-item value="deployment">
+            <FormDeployment :settings="settings"></FormDeployment>
+          </v-window-item>
 
-      <v-btn
-        color="primary"
-        @click="saveSettings"
-        style="margin-left: 10px; margin-top: 20px"
-        >{{ $t('global.applyChanges') }}</v-btn
-      >
+          <v-window-item value="templates">
+            <FormTemplates :settings="settings.settings"></FormTemplates>
+          </v-window-item>
+        </v-window>
+      </v-card>
+
+      <div class="uct-page-actions">
+        <v-btn
+          color="primary"
+          variant="flat"
+          size="large"
+          prepend-icon="mdi-content-save-outline"
+          @click="saveSettings"
+        >
+          {{ $t('global.applyChanges') }}
+        </v-btn>
+      </div>
     </v-container>
   </v-form>
 </template>
