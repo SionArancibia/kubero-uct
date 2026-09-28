@@ -187,9 +187,12 @@ const messages = {
         teamRequired: 'Selecciona al menos un equipo. Sin equipos, solo los administradores podrían ver este pipeline.',
       },
       title: {
+        create: 'Crear un nuevo pipeline',
+        edit: 'Editar {name}',
         continuousDeployment: 'Despliegue Continuo',
         environments: 'Entornos',
       },
+      description: 'Un pipeline puede tener varias fases con aplicaciones.',
       help: {
         gitrepo: 'Al conectarse, los webhooks y las claves de despliegue se almacenan en el repositorio. Esto significa que las aplicaciones configuradas en este proyecto se pueden redesplegar automáticamente con un \'git push\' y abrir un PR iniciará una nueva instancia en la fase de "revisión".',
       },

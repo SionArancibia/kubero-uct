@@ -1,259 +1,220 @@
 <template>
-  <v-form v-model="valid">
-    <v-container>
+  <v-form v-model="valid" class="pipeline-form">
+    <v-container class="pipeline-shell">
       <Breadcrumbs :items="breadcrumbItems"></Breadcrumbs>
-      <v-row>
-        <v-col
-          cols="12"
-          md="1"
-        >
-          <v-icon
-            size="44"
-            color="primary"
-            class="mr-2"
-          >mdi-source-fork</v-icon>
-        </v-col>
-        <v-col cols="12" sm="11" md="11" lg="11" xl="11">
 
-            <h2 v-if="pipeline=='new'">
-                Create a new Pipeline
-            </h2>
-            <h2 v-if="pipeline!='new'">
-                Edit <span style="color: rgb(var(--v-theme-primary))">{{ pipelineName }}</span>
-            </h2>
-            <p class="text-justify">
-                A Pipeline may have several stages with apps
-            </p>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col
-          cols="12"
-          md="5"
-        >
-          <v-text-field
-            v-model="pipelineName"
-            :rules="nameRules"
-            :counter="60"
-            :label="$t('pipeline.form.label.name') + ' *'"
-            :disabled="!newPipeline"
-            required
-          ></v-text-field>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col
-          cols="12"
-          md="6"
-        >
-          <v-text-field
-            v-model="domain"
-            :rules="domainRules"
-            :label="$t('pipeline.form.label.fqdnDomain')"
-            hint="This Wildcard Domain should point to the IP of your clusters IP defined in 'Cluster Context'. It will be used as a base domain when creating a new app."
-          ></v-text-field>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col
-          cols="12"
-          md="6"
-        >
-        <v-combobox
-            chips
-            multiple
-            v-model="access.teams"
-            :label="$t('pipeline.form.label.teamAccess')"
-            hint="Select teams that have access to this pipeline"
-            :items="isAdmin ? allTeams : authStore.userGroups"
-            :rules="teamRules"
-          ></v-combobox>
-        </v-col>
-      </v-row>
+      <header class="pipeline-header">
+        <div class="pipeline-header__icon" aria-hidden="true">
+          <v-icon size="30" color="primary">mdi-source-fork</v-icon>
+        </div>
+        <div class="pipeline-header__copy">
+          <h1 v-if="pipeline == 'new'" class="uct-h1 pipeline-header__title">
+            {{ $t('pipeline.form.title.create') }}
+          </h1>
+          <i18n-t v-else keypath="pipeline.form.title.edit" tag="h1" class="uct-h1 pipeline-header__title">
+            <template #name>
+              <span class="pipeline-header__name">{{ pipelineName }}</span>
+            </template>
+          </i18n-t>
+          <p class="pipeline-header__description">
+            {{ $t('pipeline.form.description') }}
+          </p>
+        </div>
+      </header>
 
+      <main class="pipeline-content">
+        <v-card color="cardBackground" class="uct-card pipeline-card pipeline-card--settings" elevation="0">
+          <v-card-text class="pipeline-card__body">
+            <v-row class="pipeline-fields" dense>
+              <v-col cols="12" lg="6">
+                <v-text-field
+                  v-model="pipelineName"
+                  :rules="nameRules"
+                  :counter="60"
+                  :label="$t('pipeline.form.label.name') + ' *'"
+                  :disabled="!newPipeline"
+                  variant="outlined"
+                  required
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" lg="6">
+                <v-combobox
+                  v-model="access.teams"
+                  chips
+                  multiple
+                  :label="$t('pipeline.form.label.teamAccess')"
+                  hint="Select teams that have access to this pipeline"
+                  :items="isAdmin ? allTeams : authStore.userGroups"
+                  :rules="teamRules"
+                  variant="outlined"
+                ></v-combobox>
+              </v-col>
+              <v-col cols="12">
+                <v-text-field
+                  v-model="domain"
+                  :rules="domainRules"
+                  :label="$t('pipeline.form.label.fqdnDomain')"
+                  hint="This Wildcard Domain should point to the IP of your clusters IP defined in 'Cluster Context'. It will be used as a base domain when creating a new app."
+                  variant="outlined"
+                ></v-text-field>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
 
-
-
-      <v-card color="cardBackground" class="uct-card">
-        <v-card-title class="text-h6 font-weight-bold">{{ $t('pipeline.form.title.environments') }}</v-card-title>
-        <v-card-text>
-          <div v-for="phase in phases" :key="phase.name" class="my-0">
-          <v-row>
-            <v-col
-              cols="12"
-              md="3"
-              class="py-0"
+        <v-card color="cardBackground" class="uct-card pipeline-card pipeline-card--environments" elevation="0">
+          <v-card-title class="pipeline-card__header">
+            <span class="uct-section-title">{{ $t('pipeline.form.title.environments') }}</span>
+            <v-icon size="20" color="primary" aria-hidden="true">mdi-layers-triple-outline</v-icon>
+          </v-card-title>
+          <v-divider></v-divider>
+          <v-card-text class="pipeline-card__body pipeline-card__body--environments">
+            <section
+              v-for="phase in phases"
+              :key="phase.name"
+              class="phase-row"
+              :class="{ 'phase-row--enabled': phase.enabled }"
             >
-              <v-switch
-                v-model="phase.enabled"
-                :label="phase.name"
-                :disabled="phase.name == 'review'"
-                dense
-                class="text-overline"
-                color="primary"
-              ></v-switch>
-            </v-col>
-            <v-col
-              cols="12"
-              md="4"
-              class="py-0"
-            >
-              <v-select
-                v-model="phase.context"
-                :items="contextList"
-                :label="$t('pipeline.form.label.cluster')"
-                v-if="phase.enabled && phase.name != 'review'"
-                dense
-              ></v-select>
-            </v-col>
-          </v-row>
-            <div v-if="phase.enabled && phase.name == 'review'">
-              <v-row>
-                <v-col
-                  cols="12"
-                  md="5"
-                  class="py-0"
-                >
+              <div class="phase-row__rail" aria-hidden="true"></div>
+              <div class="phase-row__content">
+                <div class="phase-row__controls">
+                  <v-switch
+                    v-model="phase.enabled"
+                    :label="phase.name"
+                    :disabled="phase.name == 'review'"
+                    class="phase-switch"
+                    color="primary"
+                    density="compact"
+                    hide-details
+                  ></v-switch>
                   <v-select
+                    v-if="phase.enabled && phase.name != 'review'"
                     v-model="phase.context"
+                    class="phase-context"
                     :items="contextList"
-                    :label="$t('pipeline.form.label.clusterContext') + ' *'"
-                    v-if="phase.enabled"
-                    dense
+                    :label="$t('pipeline.form.label.cluster')"
+                    variant="outlined"
+                    density="compact"
+                    hide-details
                   ></v-select>
-                </v-col>
-              </v-row>
-              <!-- TTL Feature is not ready yet
-              <v-row v-if="phase.name == 'review'">
-                <v-col
-                  cols="12"
-                  md="2"
-                  class="py-0"
-                  density="compact"
-                >
-                  <v-combobox
-                    clearable
-                    label="TTL"
-                    :items="['8h', '1d', '1w', '1m']"
-                  ></v-combobox>
-                </v-col>
-              </v-row>
-              -->
-              <v-row>
-                <v-col
-                  cols="12"
-                  md="5"
-                >
-                  <v-text-field
-                    v-model="phase.domain"
-                    :rules="domainRules"
-                    label="Base domain"
-                    density="compact"
-                    hint="This Wildcard Domain should point to the IP of your cluster defined in 'Cluster Context'. It will be used to create a subdomain for each PR."
-                  ></v-text-field>
-                </v-col>
-              </v-row>
-              <div class="d-flex align-center pa-2 mb-1">
-                <div class="font-weight-bold v-label">Default Environment Variables</div>
-                <v-btn
-                  variant="text"
-                  size="small"
-                  class="ml-2"
-                  :prepend-icon="showEnvValues ? 'mdi-eye-off' : 'mdi-eye'"
-                  @click="showEnvValues = !showEnvValues"
-                >
-                  {{ showEnvValues ? $t('app.form.hideEnvValues') : $t('app.form.showEnvValues') }}
-                </v-btn>
+                </div>
+
+                <div v-if="phase.enabled && phase.name == 'review'" class="review-settings">
+                  <v-row dense>
+                    <v-col cols="12" md="6">
+                      <v-select
+                        v-if="phase.enabled"
+                        v-model="phase.context"
+                        :items="contextList"
+                        :label="$t('pipeline.form.label.clusterContext') + ' *'"
+                        variant="outlined"
+                        density="compact"
+                      ></v-select>
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model="phase.domain"
+                        :rules="domainRules"
+                        label="Base domain"
+                        density="compact"
+                        hint="This Wildcard Domain should point to the IP of your cluster defined in 'Cluster Context'. It will be used to create a subdomain for each PR."
+                        variant="outlined"
+                      ></v-text-field>
+                    </v-col>
+                  </v-row>
+
+                  <div class="env-header">
+                    <div class="uct-label env-header__title">Default Environment Variables</div>
+                    <v-btn
+                      variant="text"
+                      size="small"
+                      color="primary"
+                      :prepend-icon="showEnvValues ? 'mdi-eye-off-outline' : 'mdi-eye-outline'"
+                      @click="showEnvValues = !showEnvValues"
+                    >
+                      {{ showEnvValues ? $t('app.form.hideEnvValues') : $t('app.form.showEnvValues') }}
+                    </v-btn>
+                  </div>
+
+                  <div class="env-list">
+                    <v-row
+                      v-for="(envvar, index) in phase.defaultEnvvars"
+                      :key="index"
+                      class="env-row"
+                      dense
+                    >
+                      <v-col cols="12" md="5">
+                        <v-text-field
+                          v-model="envvar.name"
+                          :label="$t('global.name')"
+                          density="compact"
+                          :counter="60"
+                          variant="outlined"
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" md="6">
+                        <v-text-field
+                          v-model="envvar.value"
+                          :label="$t('global.value')"
+                          density="compact"
+                          :type="showEnvValues ? 'text' : 'password'"
+                          autocomplete="new-password"
+                          variant="outlined"
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" md="1" class="env-row__action">
+                        <v-btn
+                          icon="mdi-minus"
+                          size="small"
+                          variant="tonal"
+                          color="error"
+                          aria-label="Remove environment variable"
+                          @click="removeEnvLine(phase, envvar.name)"
+                        ></v-btn>
+                      </v-col>
+                    </v-row>
+                  </div>
+
+                  <v-btn
+                    class="env-add"
+                    icon="mdi-plus"
+                    size="small"
+                    variant="tonal"
+                    color="primary"
+                    aria-label="Add environment variable"
+                    @click="addEnvLine(phase)"
+                  ></v-btn>
+                </div>
               </div>
-              <v-row v-for="(envvar, index) in phase.defaultEnvvars" :key="index">
-                <v-col
-                  cols="12"
-                  md="5"
-                  class="py-0"
-                >
-                  <v-text-field
-                    v-model="envvar.name"
-                    :label="$t('global.name')"
-                    density="compact"
-                    :counter="60"
-                  ></v-text-field>
-                </v-col>
-                <v-col
-                  cols="12"
-                  md="6"
-                  class="py-0"
-                >
-                  <v-text-field
-                    v-model="envvar.value"
-                    :label="$t('global.value')"
-                    density="compact"
-                    :type="showEnvValues ? 'text' : 'password'"
-                    autocomplete="new-password"
-                  ></v-text-field>
-                </v-col>
-                <v-col
-                  cols="12"
-                  md="1"
-                  class="py-0"
-                >
-                  <v-btn
-                  elevation="2"
-                  icon
-                  size="small"
-                  @click="removeEnvLine(phase, envvar.name)"
-                  >
-                      <v-icon dark >
-                          mdi-minus
-                      </v-icon>
-                  </v-btn>
-                </v-col>
-              </v-row>
+            </section>
+          </v-card-text>
+        </v-card>
 
-              <v-row class="mt-0">
-                <v-col
-                  cols="12"
-                  class="pt-0 mb-8"
-                >
-                  <v-btn
-                  elevation="2"
-                  icon
-                  size="small"
-                  @click="addEnvLine(phase)"
-                  >
-                      <v-icon dark >
-                          mdi-plus
-                      </v-icon>
-                  </v-btn>
-                </v-col>
-              </v-row>
-              <hr class="mb-5">
-            </div>
-          </div>
-        </v-card-text>
-      </v-card>
-
-      <v-row>
-        <v-col
-          cols="12"
-          md="4"
-          class="mt-8"
-        >
-            <v-btn
-                color="primary"
-                v-if="newPipeline"
-                elevation="2"
-                @click="createPipeline()"
-                :disabled="!valid"
-                >{{ $t('pipeline.buttons.create') }}</v-btn>
-            <v-btn
-                color="primary"
-                v-if="!newPipeline"
-                elevation="2"
-                @click="updatePipeline()"
-                :disabled="!valid"
-                >{{ $t('pipeline.buttons.update') }}</v-btn>
-        </v-col>
-      </v-row>
+        <div class="pipeline-actions">
+          <v-btn
+            v-if="newPipeline"
+            color="primary"
+            size="large"
+            variant="flat"
+            prepend-icon="mdi-source-fork"
+            :disabled="!valid"
+            @click="createPipeline()"
+          >
+            {{ $t('pipeline.buttons.create') }}
+          </v-btn>
+          <v-btn
+            v-else
+            color="primary"
+            size="large"
+            variant="flat"
+            prepend-icon="mdi-content-save-outline"
+            :disabled="!valid"
+            @click="updatePipeline()"
+          >
+            {{ $t('pipeline.buttons.update') }}
+          </v-btn>
+        </div>
+      </main>
     </v-container>
   </v-form>
 </template>
@@ -503,58 +464,256 @@ export default defineComponent({
 })
 </script>
 
-<style lang="scss">
-.alert i.v-icon.v-icon {
-  color: white !important;
+<style lang="scss" scoped>
+.pipeline-form {
+  min-height: 100%;
 }
 
-.gogs{
-    background-image: url('./../../../public/img/icons/gogs.svg');
-    background-size: contain;
-    background-repeat: no-repeat;
-    filter: brightness(0) saturate(100%) invert(28%) sepia(0%) saturate(78%) hue-rotate(197deg) brightness(95%) contrast(83%);
-    /*filter: invert(39%) sepia(47%) saturate(584%) hue-rotate(228deg) brightness(95%) contrast(80%);
-    /*filter: invert(93%) sepia(49%) saturate(7411%) hue-rotate(184deg) brightness(87%) contrast(90%);*/
+.pipeline-shell {
+  max-width: 1120px;
+  padding: 24px;
 }
 
-.gogs::before {
-    height: 23px;
-    width: 23px;
-    visibility: hidden;
-    content: "";
+.pipeline-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 8px 0 24px;
 }
 
-
-.onedev{
-    background-image: url('./../../../public/img/icons/onedev.svg');
-    background-size: contain;
-    background-repeat: no-repeat;
-    filter: brightness(0) saturate(100%) invert(28%) sepia(0%) saturate(78%) hue-rotate(197deg) brightness(95%) contrast(83%);
-    /*filter: invert(39%) sepia(47%) saturate(584%) hue-rotate(228deg) brightness(95%) contrast(80%);
-    /*filter: invert(93%) sepia(49%) saturate(7411%) hue-rotate(184deg) brightness(87%) contrast(90%);*/
+.pipeline-header__icon {
+  display: grid;
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 12px;
+  background: rgb(var(--v-theme-primary) / 0.1);
 }
 
-.onedev::before {
-    height: 23px;
-    width: 23px;
-    visibility: hidden;
-    content: "";
+.pipeline-header__copy {
+  min-width: 0;
 }
 
-.gitea{
-    background-image: url('./../../../public/img/icons/gitea.svg');
-    background-size: contain;
-    background-repeat: no-repeat;
-    filter: brightness(0) saturate(100%) invert(28%) sepia(0%) saturate(78%) hue-rotate(197deg) brightness(95%) contrast(83%);
-    /*filter: invert(39%) sepia(47%) saturate(584%) hue-rotate(228deg) brightness(95%) contrast(80%);
-    /*filter: invert(93%) sepia(49%) saturate(7411%) hue-rotate(184deg) brightness(87%) contrast(90%);*/
+.pipeline-header__title {
+  margin: 0;
+  color: rgb(var(--v-theme-on-background));
 }
 
-.gitea::before {
-    height: 23px;
-    width: 23px;
-    visibility: hidden;
-    content: "";
+.pipeline-header__name {
+  color: rgb(var(--v-theme-primary));
 }
 
+.pipeline-header__description {
+  max-width: 70ch;
+  margin: 4px 0 0;
+  color: rgb(var(--v-theme-on-background) / 0.68);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.pipeline-content {
+  display: grid;
+  gap: 24px;
+}
+
+.pipeline-card {
+  overflow: hidden;
+}
+
+.pipeline-card__header {
+  display: flex;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+}
+
+.pipeline-card__body {
+  padding: 24px;
+}
+
+.pipeline-card__body--environments {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.pipeline-fields {
+  margin-bottom: -12px;
+}
+
+.phase-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 3px minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid rgb(var(--v-theme-on-cardBackground) / 0.1);
+  border-radius: 8px;
+  background: rgb(var(--v-theme-secondary) / 0.42);
+  transition: border-color 180ms ease-out, background-color 180ms ease-out;
+}
+
+.phase-row--enabled {
+  border-color: rgb(var(--v-theme-primary) / 0.24);
+  background: rgb(var(--v-theme-cardBackground));
+}
+
+.phase-row__rail {
+  background: rgb(var(--v-theme-on-cardBackground) / 0.12);
+  transition: background-color 180ms ease-out;
+}
+
+.phase-row--enabled .phase-row__rail {
+  background: rgb(var(--v-theme-primary));
+}
+
+.phase-row__content {
+  min-width: 0;
+  padding: 12px 16px;
+}
+
+.phase-row__controls {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.4fr) minmax(240px, 0.6fr);
+  align-items: center;
+  gap: 24px;
+  min-height: 44px;
+}
+
+.phase-switch {
+  width: fit-content;
+  text-transform: capitalize;
+}
+
+.phase-switch :deep(.v-label) {
+  color: rgb(var(--v-theme-on-cardBackground));
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+.review-settings {
+  padding-top: 16px;
+  border-top: 1px solid rgb(var(--v-theme-on-cardBackground) / 0.1);
+}
+
+.env-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 4px 0 12px;
+}
+
+.env-header__title {
+  color: rgb(var(--v-theme-on-cardBackground) / 0.62) !important;
+}
+
+.env-list {
+  display: grid;
+  gap: 4px;
+}
+
+.env-row__action {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 6px;
+}
+
+.env-add {
+  margin-top: 4px;
+}
+
+.pipeline-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 0 16px;
+}
+
+.pipeline-actions .v-btn {
+  min-width: 176px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.pipeline-card :deep(.v-field) {
+  border-radius: 8px;
+}
+
+.pipeline-card :deep(.v-field--focused) {
+  box-shadow: 0 0 0 3px rgb(var(--v-theme-primary) / 0.12);
+}
+
+@media (max-width: 959px) {
+  .pipeline-shell {
+    padding: 16px;
+  }
+
+  .pipeline-header {
+    margin-bottom: 20px;
+  }
+
+  .phase-row__controls {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .phase-context {
+    width: 100%;
+    padding-bottom: 4px;
+  }
+
+  .env-row__action {
+    justify-content: flex-start;
+    padding-top: 0;
+  }
+}
+
+@media (max-width: 599px) {
+  .pipeline-shell {
+    padding: 12px;
+  }
+
+  .pipeline-header {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .pipeline-header__icon {
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+  }
+
+  .pipeline-card__body {
+    padding: 16px;
+  }
+
+  .pipeline-card__body--environments {
+    padding: 12px;
+  }
+
+  .phase-row__content {
+    padding: 12px;
+  }
+
+  .env-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .pipeline-actions .v-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phase-row,
+  .phase-row__rail {
+    transition: none;
+  }
+}
 </style>
