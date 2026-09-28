@@ -1,6 +1,14 @@
 <template>
   <v-container>
+    <v-alert v-if="actionError" type="error" variant="tonal" closable class="ma-4" @click:close="actionError = ''">{{ actionError }}</v-alert>
+    <v-alert v-if="loadError" type="warning" variant="tonal" class="ma-4">
+      <div class="d-flex align-center justify-space-between ga-4">
+        <span>{{ $t('accounts.errors.loadTokens') }}</span>
+        <v-btn variant="outlined" color="warning" size="small" @click="loadTokens">{{ $t('accounts.retry') }}</v-btn>
+      </div>
+    </v-alert>
     <v-data-table
+      v-if="!loadError"
       :headers="headers"
       :items="tokens"
       :loading="loading"
@@ -39,6 +47,7 @@
           class="ma-2"
           color="secondary"
           @click="deleteToken(item)"
+          :aria-label="`${$t('global.delete')} ${item.name}`"
           :disabled="!writeUserPermission"
         >
           <v-icon color="primary">
@@ -74,12 +83,11 @@ export default defineComponent({
     }
     const tokens = ref<Token[]>([])
     const loading = ref(false)
+    const loadError = ref(false)
+    const actionError = ref('')
     const search = ref('')
-    const createDialog = ref(false)
-    const newToken = ref<Token>({ token: '', name: '', expiresAt: '', userId: '' })
-
     const authStore = useAuthStore()
-    const writeUserPermission = ref(authStore.hasPermission('user:write'))
+    const writeUserPermission = ref(authStore.hasPermission('token:ok') || authStore.hasPermission('token:write'))
 
     const headers = [
       { title: t('tokens.form.id'), value: 'token' },
@@ -91,11 +99,13 @@ export default defineComponent({
 
     const loadTokens = async () => {
       loading.value = true
+      loadError.value = false
       try {
         const res = await axios.get('/api/tokens')
         tokens.value = res.data
       } catch (e) {
         tokens.value = []
+        loadError.value = true
       }
       loading.value = false
     }
@@ -105,7 +115,8 @@ export default defineComponent({
         await axios.delete(`/api/tokens/${token.id}`)
         await loadTokens()
       } catch (e) {
-        console.error('Error deleting token:', e)
+        const message = (e as any)?.response?.data?.message
+        actionError.value = Array.isArray(message) ? message.join(', ') : message || (e as Error)?.message || t('accounts.errors.action')
       }
     }
 
@@ -117,6 +128,9 @@ export default defineComponent({
       tokens,
       headers,
       loading,
+      loadError,
+      actionError,
+      loadTokens,
       search,
       deleteToken,
       writeUserPermission,

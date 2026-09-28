@@ -8,7 +8,14 @@
       class="mb-4"
       @click:close="actionError = ''"
     >{{ actionError }}</v-alert>
+    <v-alert v-if="loadError" type="warning" variant="tonal" class="ma-4">
+      <div class="d-flex align-center justify-space-between ga-4">
+        <span>{{ $t('accounts.errors.loadTeams') }}</span>
+        <v-btn variant="outlined" color="warning" size="small" @click="loadTeams">{{ $t('accounts.retry') }}</v-btn>
+      </div>
+    </v-alert>
     <v-data-table
+      v-if="!loadError"
       :headers="headers"
       :items="teams"
       :loading="loading"
@@ -51,6 +58,7 @@
           class="ma-2"
           color="secondary"
           @click="openEditTeamDialog(item)"
+          :aria-label="`${$t('global.edit')} ${item.name}`"
           :disabled="!writeUserPermission"
         >
           <v-icon color="primary">
@@ -64,6 +72,7 @@
           class="ma-2"
           color="secondary"
           @click="deleteTeam(item)"
+          :aria-label="`${$t('global.delete')} ${item.name}`"
           :disabled="!writeUserPermission"
         >
           <v-icon color="primary">
@@ -74,7 +83,7 @@
     </v-data-table>
 
     <!-- Button to add a group -->
-    <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+    <div class="legacy-create-control">
       <v-btn
         fab
         color="primary"
@@ -168,11 +177,12 @@ export default defineComponent({
     }
     const teams = ref<Team[]>([])
     const loading = ref(false)
+    const loadError = ref(false)
     const search = ref('')
     const editDialog = ref(false)
     const createDialog = ref(false)
     const editedTeam = ref<Team | any>({})
-    const newTeam = ref(<Team>({ name: '', description: '' }))
+    const newTeam = ref<Team>({ name: '', description: '' })
 
     const authStore = useAuthStore();
     const writeUserPermission = authStore.hasPermission('user:write')
@@ -195,11 +205,13 @@ export default defineComponent({
 
     const loadTeams = async () => {
       loading.value = true
+      loadError.value = false
       try {
         const res = await axios.get('/api/groups')
         teams.value = res.data
       } catch (e) {
         teams.value = []
+        loadError.value = true
       }
       loading.value = false
     }
@@ -256,6 +268,8 @@ export default defineComponent({
       teams,
       headers,
       loading,
+      loadError,
+      loadTeams,
       search,
       editDialog,
       createDialog,

@@ -8,7 +8,14 @@
       class="mb-4"
       @click:close="actionError = ''"
     >{{ actionError }}</v-alert>
+    <v-alert v-if="loadError" type="warning" variant="tonal" class="ma-4">
+      <div class="d-flex align-center justify-space-between ga-4">
+        <span>{{ $t('accounts.errors.loadUsers') }}</span>
+        <v-btn variant="outlined" color="warning" size="small" @click="loadUsers">{{ $t('accounts.retry') }}</v-btn>
+      </div>
+    </v-alert>
     <v-data-table
+      v-if="!loadError"
       :headers="headers"
       :items="users"
       :loading="loading"
@@ -98,6 +105,7 @@
           size="small"
           class="ma-2"
           @click="deleteUser(item)"
+          :aria-label="`${$t('global.delete')} ${item.username}`"
           :disabled="item.username === 'admin' || item.username === 'system' || !writeUserPermission"
         >
           <v-icon color="primary">
@@ -111,6 +119,7 @@
           size="small"
           class="ma-2"
           @click="openChangePasswordDialog(item)"
+          :aria-label="$t('user.changePasswordFor', { user: item.username })"
           :disabled="item.username === 'system' || !writeUserPermission"
         >
           <v-icon color="primary">
@@ -124,6 +133,7 @@
           size="small"
           class="ma-2"
           @click="openEditUserDialog(item)"
+          :aria-label="`${$t('global.edit')} ${item.username}`"
           :disabled="item.username === 'admin' || item.username === 'system' || !writeUserPermission"
           >
             <v-icon color="primary">
@@ -135,7 +145,7 @@
     </v-data-table>
 
     <!-- Button to add a user -->
-    <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+    <div class="legacy-create-control">
       <v-btn
         fab
         color="primary"
@@ -184,7 +194,7 @@
             multiple
             clearable
           >
-            <template v-slot:selection="{ item, index }">
+            <template v-slot:selection="{ item }">
               <v-chip :text="item.title"></v-chip>
             </template>
           </v-select>
@@ -234,7 +244,7 @@
             multiple
             clearable
           >
-            <template v-slot:selection="{ item, index }">
+            <template v-slot:selection="{ item }">
               <v-chip :text="item.title"></v-chip>
             </template>
           </v-select>
@@ -313,6 +323,7 @@ export default defineComponent({
     }
     const users = ref<User[]>([])
     const loading = ref(false)
+    const loadError = ref(false)
     const search = ref('')
     const editDialog = ref(false)
     const createDialog = ref(false)
@@ -352,11 +363,13 @@ export default defineComponent({
 
     const loadUsers = async () => {
       loading.value = true
+      loadError.value = false
       try {
         const res = await axios.get('/api/users')
         users.value = res.data
       } catch (e) {
         users.value = []
+        loadError.value = true
       }
       loading.value = false
     }
@@ -501,6 +514,8 @@ export default defineComponent({
       users,
       headers,
       loading,
+      loadError,
+      loadUsers,
       search,
       openEditUserDialog,
       deleteUser,

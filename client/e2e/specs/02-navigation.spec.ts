@@ -174,6 +174,26 @@ test.describe('Navegación Transversal en el Dashboard de Kubero', () => {
     await expect(page.getByRole('heading', { name: 'Overview', exact: true })).toBeVisible();
   });
 
+  test('Debe abrir la navegación de Cuentas y mostrar sus cuatro áreas administrativas', async ({ page }) => {
+    await page.goto('/profile');
+    const navDrawer = new NavDrawerPage(page);
+    await expect(navDrawer.accountsTrigger).toBeVisible({ timeout: 15000 });
+
+    await navDrawer.openAccountsNavigation();
+
+    await expect(navDrawer.accountsTrigger).toHaveAttribute('aria-expanded', 'true');
+    await expect(navDrawer.secondaryDrawer).toHaveAttribute('id', 'secondary-nav-accounts');
+    await expect(navDrawer.secondaryItem('/accounts/users')).toBeVisible();
+    await expect(navDrawer.secondaryItem('/accounts/teams')).toBeVisible();
+    await expect(navDrawer.secondaryItem('/accounts/roles')).toBeVisible();
+    await expect(navDrawer.secondaryItem('/accounts/tokens')).toBeVisible();
+
+    await navDrawer.secondaryItem('/accounts/teams').click();
+    await page.waitForURL('**/accounts/teams');
+    await expect(navDrawer.secondaryDrawer).not.toBeVisible();
+    await expect(page.getByRole('heading', { name: /Teams|Equipos/, exact: true })).toBeVisible();
+  });
+
   test('Debe mantener un solo grupo abierto y exponer enlaces externos seguros', async ({ page }) => {
     await page.goto('/profile');
     const navDrawer = new NavDrawerPage(page);

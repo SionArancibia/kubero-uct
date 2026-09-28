@@ -436,6 +436,21 @@ const messages = {
         teams: 'Teams',
         roles: 'Roles',
         tokens: 'Tokens',
+        workspace: 'Account administration',
+        descriptions: {
+          users: 'Manage identities, access status, assigned roles, and team membership.',
+          teams: 'Organize users into access groups for pipelines and shared resources.',
+          roles: 'Define reusable permission sets for platform operations and administration.',
+          tokens: 'Review and revoke API credentials issued across user accounts.',
+        },
+        retry: 'Try again',
+        errors: {
+          loadUsers: 'Users could not be loaded. Check your access or connection and try again.',
+          loadTeams: 'Teams could not be loaded. Check your access or connection and try again.',
+          loadRoles: 'Roles could not be loaded. Check your access or connection and try again.',
+          loadTokens: 'Tokens could not be loaded. Check your access or connection and try again.',
+          action: 'The operation could not be completed. Try again or check your permissions.',
+        },
       },
       teams: {
         name: 'Teams',
@@ -453,6 +468,13 @@ const messages = {
         name: 'Roles',
         search: 'Search for a Role',
         permission: 'Permission',
+        permissionLabel: '{resource}: {level}',
+        levels: {
+          none: 'No access',
+          read: 'Read',
+          write: 'Write',
+          ok: 'Allowed',
+        },
         actions: {
           create: 'Create Role',
           edit: 'Edit Role',

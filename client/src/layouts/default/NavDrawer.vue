@@ -90,12 +90,22 @@
             prepend-icon="mdi-bookshelf"
             :title="$t('navigation.addOns')">
         </v-list-item>
-        <v-list-item 
-            link to="/accounts" 
-            v-if="kubero.isAuthenticated && !kubero.adminDisabled && (authStore.hasPermission('user:write') || authStore.hasPermission('user:read'))"
-            prepend-icon="mdi-account-outline"
-            :title="$t('navigation.accounts')">
-        </v-list-item>
+        <v-list-item
+          v-if="kubero.isAuthenticated && !kubero.adminDisabled && canOpenAccounts"
+          id="nav-accounts-trigger"
+          class="secondary-nav-trigger"
+          role="button"
+          tabindex="0"
+          data-testid="accounts-navigation-trigger"
+          prepend-icon="mdi-account-outline"
+          :title="$t('navigation.accounts')"
+          :active="activeSecondary === 'accounts' || isAccountsRoute"
+          :aria-expanded="activeSecondary === 'accounts'"
+          aria-controls="secondary-nav-accounts"
+          @click="openSecondary('accounts', $event)"
+          @keydown.enter.prevent="openSecondary('accounts', $event)"
+          @keydown.space.prevent="openSecondary('accounts', $event)"
+        ></v-list-item>
         <v-list-item
           v-if="kubero.isAuthenticated && !kubero.adminDisabled && (authStore.hasPermission('config:write') || authStore.hasPermission('config:read'))"
           class="secondary-nav-trigger"
@@ -144,12 +154,7 @@
                 @keydown.enter.prevent="openSecondary('documentation', $event)"
                 @keydown.space.prevent="openSecondary('documentation', $event)"
             ></v-list-item>
-            <v-list-item 
-                link href="https://github.com/kubero-dev/kubero" 
-                target="_blank"
-                prepend-icon="mdi-github"
-                :title="$t('navigation.github')">
-            </v-list-item>
+
             <!--
             <v-list-item 
                 link href="https://www.reddit.com/r/kubero/" 
@@ -158,13 +163,7 @@
                 title="Reddit">
             </v-list-item>
             -->
-            <v-list-item 
-                link href="https://discord.gg/tafRPMWS4r" 
-                target="_blank"
-                prepend-icon="mdi-discord"
-                :title="$t('navigation.discord')">
-                <img src="./../../../public/img/icons/discord.svg" class="image-icon" alt="Discord"/>
-            </v-list-item>
+
             <!--
             <v-list-item 
                 link href="https://join.slack.com/t/kubero/shared_invite/zt-1leocjhrm-kYwk_dcwHUcEkcjUgQCFaA" 
@@ -313,7 +312,7 @@ const primaryOpen = ref(mdAndUp.value)
 const userAvatar = ref<string>('')
 const userName = ref<string>('')
 const userEmail = ref<string>('')
-type SecondaryGroup = 'pipelines' | 'settings' | 'documentation'
+type SecondaryGroup = 'pipelines' | 'accounts' | 'settings' | 'documentation'
 
 const activeSecondary = ref<SecondaryGroup | null>(null)
 const activeTrigger = ref<HTMLElement | null>(null)
@@ -324,7 +323,11 @@ let drawerResizeObserver: ResizeObserver | null = null
 
 const settingsRoutes = ['/settings', '/runpacks', '/podsizes', '/notifications']
 const isAdmin = computed(() => authStore.role === 'admin')
+const canReadUsers = computed(() => authStore.hasPermission('user:write') || authStore.hasPermission('user:read'))
+const canReadTokens = computed(() => authStore.hasPermission('token:write') || authStore.hasPermission('token:read'))
+const canOpenAccounts = computed(() => canReadUsers.value || canReadTokens.value)
 const isPipelineRoute = computed(() => route.path === '/' || route.path === '/overview' || route.path.startsWith('/pipeline/'))
+const isAccountsRoute = computed(() => route.path.startsWith('/accounts'))
 const isSettingsRoute = computed(() => settingsRoutes.includes(route.path))
 const secondaryOpen = computed(() => activeSecondary.value !== null)
 const secondaryId = computed(() => `secondary-nav-${activeSecondary.value ?? 'closed'}`)
@@ -341,6 +344,7 @@ const secondaryScrimStyle = computed(() => ({
 }))
 const secondaryTitle = computed(() => {
   if (activeSecondary.value === 'pipelines') return t('navigation.pipelines')
+  if (activeSecondary.value === 'accounts') return t('navigation.accounts')
   if (activeSecondary.value === 'settings') return t('navigation.settings')
   return t('navigation.documentation')
 })
@@ -357,6 +361,19 @@ const settingsItems = computed<SecondaryNavItem[]>(() => [
   { id: 'runpacks', title: t('navigation.runpacks'), icon: 'mdi-cube-outline', to: '/runpacks' },
   { id: 'podsizes', title: t('navigation.podSizes'), icon: 'mdi-arrow-expand-vertical', to: '/podsizes' },
   { id: 'notifications', title: t('navigation.notifications'), icon: 'mdi-email-fast-outline', to: '/notifications' },
+])
+
+const accountItems = computed<SecondaryNavItem[]>(() => [
+  ...(canReadUsers.value
+    ? [
+        { id: 'users', title: t('accounts.users'), icon: 'mdi-account-multiple-outline', to: '/accounts/users' },
+        { id: 'teams', title: t('accounts.teams'), icon: 'mdi-account-group-outline', to: '/accounts/teams' },
+        { id: 'roles', title: t('accounts.roles'), icon: 'mdi-shield-account-outline', to: '/accounts/roles' },
+      ]
+    : []),
+  ...(canReadTokens.value
+    ? [{ id: 'tokens', title: t('accounts.tokens'), icon: 'mdi-key-chain-variant', to: '/accounts/tokens' }]
+    : []),
 ])
 
 const documentationItems = computed<SecondaryNavItem[]>(() => [
@@ -376,6 +393,7 @@ const documentationItems = computed<SecondaryNavItem[]>(() => [
 
 const secondaryItems = computed(() => {
   if (activeSecondary.value === 'pipelines') return pipelineItems.value
+  if (activeSecondary.value === 'accounts') return accountItems.value
   if (activeSecondary.value === 'settings') return settingsItems.value
   return documentationItems.value
 })

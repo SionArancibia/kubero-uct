@@ -1,6 +1,14 @@
 <template>
   <v-container>
+    <v-alert v-if="actionError" type="error" variant="tonal" closable class="ma-4" @click:close="actionError = ''">{{ actionError }}</v-alert>
+    <v-alert v-if="loadError" type="warning" variant="tonal" class="ma-4">
+      <div class="d-flex align-center justify-space-between ga-4">
+        <span>{{ $t('accounts.errors.loadRoles') }}</span>
+        <v-btn variant="outlined" color="warning" size="small" @click="loadRoles">{{ $t('accounts.retry') }}</v-btn>
+      </div>
+    </v-alert>
     <v-data-table
+      v-if="!loadError"
       :headers="headers"
       :items="roles"
       :loading="loading"
@@ -39,81 +47,90 @@
         </span>
       </template>
       <template v-slot:[`item.permissionsApp`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'app')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'app') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsPipeline`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'pipeline')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'pipeline') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsAccount`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'user')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'user') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsConfig`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'config')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'config') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsAudit`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'audit')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'audit') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsToken`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'token')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'token') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsConsole`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'console')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'console') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsLogs`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'logs')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'logs') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsReboot`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'reboot')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'reboot') }}
           </v-icon>
@@ -127,6 +144,7 @@
           class="ma-2"
           color="secondary"
           @click="openEditRoleDialog(item)"
+          :aria-label="`${$t('global.edit')} ${item.name}`"
           :disabled="item.name === 'admin' || !writeUserPermission"
         >
           <v-icon color="primary">
@@ -140,6 +158,7 @@
           class="ma-2"
           color="secondary"
           @click="deleteRole(item)"
+          :aria-label="`${$t('global.delete')} ${item.name}`"
           :disabled="item.name === 'admin' || item.name === 'guest' || item.name === 'member' || !writeUserPermission"
         >
           <v-icon color="primary">
@@ -150,7 +169,7 @@
     </v-data-table>
 
     <!-- Button to add a role -->
-    <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+    <div class="legacy-create-control">
       <v-btn
         fab
         color="primary"
@@ -375,6 +394,8 @@ export default defineComponent({
     }
     const roles = ref<Role[]>([])
     const loading = ref(false)
+    const loadError = ref(false)
+    const actionError = ref('')
     const search = ref('')
     const editDialog = ref(false)
     const createDialog = ref(false)
@@ -415,11 +436,13 @@ export default defineComponent({
 
     const loadRoles = async () => {
       loading.value = true
+      loadError.value = false
       try {
         const res = await axios.get('/api/roles')
         roles.value = res.data
       } catch (e) {
         roles.value = []
+        loadError.value = true
       }
       loading.value = false
     }
@@ -435,7 +458,7 @@ export default defineComponent({
         await loadRoles()
         editDialog.value = false
       } catch (e) {
-        console.error('Error saving role:', e)
+        actionError.value = errorText(e)
       }
     }
 
@@ -444,7 +467,7 @@ export default defineComponent({
         await axios.delete(`/api/roles/${role.id}`)
         await loadRoles()
       } catch (e) {
-        console.error('Error deleting role:', e)
+        actionError.value = errorText(e)
       }
     }
 
@@ -463,7 +486,7 @@ export default defineComponent({
         await loadRoles()
         createDialog.value = false
       } catch (e) {
-        console.error('Error creating role:', e)
+        actionError.value = errorText(e)
       }
     }
 /*
@@ -483,20 +506,39 @@ export default defineComponent({
           switch (permission.action) {
             case 'write':
               return 'mdi-pencil';
-              break;
             case 'read':
               return 'mdi-eye';
-              break;
             case 'ok':
               return 'mdi-check';
-              break;
             default:
               return 'mdi-minus';
           }
-          return 
         }
       }
       return 'mdi-cancel'
+    }
+    const resourceLabelKeys: Record<string, string> = {
+      app: 'roles.form.permissions.apps',
+      pipeline: 'roles.form.permissions.pipelines',
+      user: 'roles.form.permissions.accounts',
+      config: 'roles.form.permissions.settings',
+      token: 'roles.form.permissions.tokens',
+      audit: 'roles.form.permissions.audit',
+      console: 'roles.form.permissions.console',
+      logs: 'roles.form.permissions.logs',
+      reboot: 'roles.form.permissions.reboot',
+    }
+    const getResourcePermissionLabel = (permissions: Permission[] = [], resource: string) => {
+      const level = permissions.find((permission) => permission.resource === resource)?.action ?? 'none'
+      return t('roles.permissionLabel', {
+        resource: t(resourceLabelKeys[resource]),
+        level: t(`roles.levels.${level}`),
+      })
+    }
+    const errorText = (e: any): string => {
+      const message = e?.response?.data?.message
+      if (Array.isArray(message)) return message.join(', ')
+      return message || e?.message || t('accounts.errors.action')
     }
       
     onMounted(() => {
@@ -507,6 +549,9 @@ export default defineComponent({
       roles,
       headers,
       loading,
+      loadError,
+      actionError,
+      loadRoles,
       search,
       editDialog,
       createDialog,
@@ -518,6 +563,7 @@ export default defineComponent({
       openCreateDialog,
       saveCreate,
       getResourcePermissions,
+      getResourcePermissionLabel,
       writeUserPermission,
     }
   },

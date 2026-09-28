@@ -435,6 +435,21 @@ const messages = {
     teams: 'Equipos',
     roles: 'Roles',
     tokens: 'Tokens',
+    workspace: 'Administración de cuentas',
+    descriptions: {
+      users: 'Administra identidades, estado de acceso, roles asignados y pertenencia a equipos.',
+      teams: 'Organiza usuarios en grupos de acceso para pipelines y recursos compartidos.',
+      roles: 'Define conjuntos reutilizables de permisos para operaciones y administración.',
+      tokens: 'Revisa y revoca credenciales API emitidas para las cuentas de usuario.',
+    },
+    retry: 'Reintentar',
+    errors: {
+      loadUsers: 'No se pudieron cargar los usuarios. Comprueba tu acceso o conexión e inténtalo nuevamente.',
+      loadTeams: 'No se pudieron cargar los equipos. Comprueba tu acceso o conexión e inténtalo nuevamente.',
+      loadRoles: 'No se pudieron cargar los roles. Comprueba tu acceso o conexión e inténtalo nuevamente.',
+      loadTokens: 'No se pudieron cargar los tokens. Comprueba tu acceso o conexión e inténtalo nuevamente.',
+      action: 'No se pudo completar la operación. Inténtalo nuevamente o comprueba tus permisos.',
+    },
   },
   teams: {
     name: 'Equipos',
@@ -452,6 +467,13 @@ const messages = {
     name: 'Roles',
     search: 'Buscar un rol',
     permission: 'Permiso',
+    permissionLabel: '{resource}: {level}',
+    levels: {
+      none: 'Sin acceso',
+      read: 'Lectura',
+      write: 'Escritura',
+      ok: 'Permitido',
+    },
     actions: {
       create: 'Crear rol',
       edit: 'Editar rol',

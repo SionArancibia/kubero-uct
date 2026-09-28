@@ -9,6 +9,7 @@ export class NavDrawerPage {
   readonly documentationTrigger: Locator;
   readonly secondaryCloseBtn: Locator;
   readonly pipelinesTrigger: Locator;
+  readonly accountsTrigger: Locator;
   readonly themeToggleBtn: Locator;
   readonly versionItemBtn: Locator;
   readonly versionDialog: Locator;
@@ -25,6 +26,7 @@ export class NavDrawerPage {
     this.documentationTrigger = page.getByTestId('documentation-navigation-trigger');
     this.secondaryCloseBtn = page.getByTestId('secondary-navigation-close');
     this.pipelinesTrigger = page.getByTestId('pipelines-navigation-trigger');
+    this.accountsTrigger = page.getByTestId('accounts-navigation-trigger');
     this.themeToggleBtn = this.drawer.locator('.v-list-item').filter({
       has: page.locator('.mdi-theme-light-dark'),
     });
@@ -58,6 +60,12 @@ export class NavDrawerPage {
   async openPipelinesNavigation() {
     await this.pipelinesTrigger.scrollIntoViewIfNeeded();
     await this.pipelinesTrigger.click();
+    await expect(this.secondaryDrawer).toBeVisible();
+  }
+
+  async openAccountsNavigation() {
+    await this.accountsTrigger.scrollIntoViewIfNeeded();
+    await this.accountsTrigger.click();
     await expect(this.secondaryDrawer).toBeVisible();
   }
 
