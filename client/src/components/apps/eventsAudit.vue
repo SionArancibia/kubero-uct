@@ -1,21 +1,24 @@
 <template>
-    <div>
-        <v-card 
+    <div class="app-audit-wrap">
+        <v-card
+        class="app-audit uct-card"
         color="cardBackground"
+        elevation="0"
         v-if="auditEvents.length >0">
-            <v-card-title>
-                <h3 class="text-h5">Activity</h3>
+            <v-card-title class="app-audit__header">
+                <v-icon icon="mdi-history" color="primary" size="20"></v-icon>
+                <h2>Activity</h2>
             </v-card-title>
-            <v-card-text class="mt-10">
-                <v-row>
-                    <v-timeline align-top truncate-line="start" side="end" class="mr-5">
+            <v-card-text class="app-audit__body">
+                <v-row class="ma-0">
+                    <v-timeline align-top truncate-line="start" side="end" class="app-audit__timeline">
                         <v-timeline-item
                             v-for="event in auditEvents" :key="event.id"
                             :color=event.color
                             :icon=getIcon(event.action)
                             dot-color="var(--v-primary-base)"
                             fill-dot>
-                            <div>
+                            <div class="app-audit__event">
                                 <!--<strong class="me-4">{{ event.metadata.creationTimestamp }}</strong>-->
                                 <div>
                                     <strong>{{ event.users.username }}: </strong> {{ event.action }} {{ event.resource }}
@@ -33,10 +36,9 @@
         </v-card>
 
         <v-alert
-            outlined
+            class="app-audit__empty"
             type="info"
             variant="tonal"
-            border="start"
             v-if="auditEvents.length <1">
             <h3>Audit</h3>
             The audit log is ether empty or disabled.
@@ -132,3 +134,60 @@ export default defineComponent({
     }
 });
 </script>
+
+<style lang="scss" scoped>
+.app-audit-wrap {
+    min-width: 0;
+}
+
+.app-audit {
+    overflow: hidden;
+}
+
+.app-audit__header {
+    display: flex;
+    min-height: 64px;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--uct-corp-gray-border);
+    background: rgba(var(--v-theme-secondary), 0.38);
+}
+
+.app-audit__header h2 {
+    margin: 0;
+    color: rgb(var(--v-theme-on-cardBackground));
+    font-size: 0.875rem;
+    font-weight: 650;
+}
+
+.app-audit__body {
+    padding: 20px 18px 12px;
+}
+
+.app-audit__timeline {
+    width: 100%;
+    margin: 0;
+}
+
+.app-audit__timeline :deep(.v-timeline-item__body) {
+    min-width: 0;
+    padding-bottom: 18px;
+}
+
+.app-audit__event {
+    color: rgb(var(--v-theme-on-cardBackground));
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.app-audit__event .text-caption {
+    margin-top: 4px;
+    opacity: 0.72;
+}
+
+.app-audit__empty {
+    border-radius: 12px;
+}
+</style>

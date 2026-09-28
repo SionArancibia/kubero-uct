@@ -1,10 +1,10 @@
 <template>
-    <v-container>
-        <v-row>
-            <v-col cols="12" sm="12" md="6" lg="6" xl="6">
+    <v-container fluid class="app-overview">
+        <v-row class="app-overview__grid">
+            <v-col cols="12" lg="8" class="app-overview__main">
                 <Appstats :pipeline="pipeline" :phase="phase" :app="app" :appData="appData" :pipelineData="pipelineData"></Appstats>
             </v-col>
-            <v-col cols="12" sm="12" md="6" lg="6" xl="6">
+            <v-col cols="12" lg="4" class="app-overview__aside">
                 <Audit :pipeline="pipeline" :phase="phase" :app="app"></Audit>
             </v-col>
         </v-row>
@@ -49,6 +49,29 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
+.app-overview {
+    padding: 0;
+}
 
+.app-overview__grid {
+    margin: -8px;
+}
+
+.app-overview__main,
+.app-overview__aside {
+    padding: 8px;
+}
+
+.app-overview__aside {
+    min-width: 0;
+}
+
+@media (min-width: 1280px) {
+    .app-overview__aside {
+        position: sticky;
+        top: 20px;
+        align-self: flex-start;
+    }
+}
 </style>
