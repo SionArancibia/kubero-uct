@@ -1,6 +1,7 @@
 // Composables
 import { createRouter, createWebHistory, RouteLocationNormalized } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useCookies } from 'vue3-cookies'
 
 const routes = [
   {
@@ -14,6 +15,12 @@ const routes = [
         // this generates a separate chunk (Pipeline-[hash].js) for this route
         // which is lazy-loaded when the route is visited.
         component: () => import('@/views/Pipeline.vue'),
+      },
+      {
+        path: '/overview',
+        name: 'Overview',
+        meta: { requiresAdmin: true },
+        component: () => import('@/views/Overview.vue'),
       },
       {
         path: '/pipeline/:pipeline',
@@ -88,11 +95,34 @@ const routes = [
   {
     path: '/accounts',
     component: () => import('@/layouts/default/Default.vue'),
-    meta: { requiresUserWrite: true },
     children: [
       {
         path: '/accounts',
         name: 'Accounts',
+        component: () => import('@/views/Accounts.vue'),
+      },
+      {
+        path: '/accounts/users',
+        name: 'Account Users',
+        meta: { accountSection: 'users', requiredAnyPermissions: ['user:read', 'user:write'] },
+        component: () => import('@/views/Accounts.vue'),
+      },
+      {
+        path: '/accounts/teams',
+        name: 'Account Teams',
+        meta: { accountSection: 'teams', requiredAnyPermissions: ['user:read', 'user:write'] },
+        component: () => import('@/views/Accounts.vue'),
+      },
+      {
+        path: '/accounts/roles',
+        name: 'Account Roles',
+        meta: { accountSection: 'roles', requiredAnyPermissions: ['user:read', 'user:write'] },
+        component: () => import('@/views/Accounts.vue'),
+      },
+      {
+        path: '/accounts/tokens',
+        name: 'Account Tokens',
+        meta: { accountSection: 'tokens', requiredAnyPermissions: ['token:read', 'token:write'] },
         component: () => import('@/views/Accounts.vue'),
       },
     ],
@@ -191,16 +221,27 @@ const router = createRouter({
   routes,
 })
 
-/* Forced Permission redirect
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   const authStore = useAuthStore()
-  if (to.matched.some(record => record.meta.requiresUserWrite)) {
-    // If not logged in or missing permission, redirect to home
-    if (!authStore.hasPermission('user:write') && !authStore.hasPermission('user:read')) {
-      return next({ path: '/' })
-    }
+
+  const { cookies } = useCookies()
+  const token = cookies.get('kubero.JWT_TOKEN')
+  if (token && token !== authStore.token) authStore.loadToken(token)
+  if (!token && authStore.token) authStore.reset()
+
+  if (to.path === '/accounts') {
+    if (authStore.hasPermission('user:read') || authStore.hasPermission('user:write')) return { name: 'Account Users' }
+    if (authStore.hasPermission('token:read') || authStore.hasPermission('token:write')) return { name: 'Account Tokens' }
+    return { name: 'Pipelines' }
   }
-  next()
+
+  if (to.meta.requiresAdmin && authStore.role !== 'admin') {
+    return { name: 'Pipelines' }
+  }
+
+  const requiredAnyPermissions = to.meta.requiredAnyPermissions as string[] | undefined
+  if (requiredAnyPermissions?.length && !requiredAnyPermissions.some((permission) => authStore.hasPermission(permission))) {
+    return { name: 'Pipelines' }
+  }
 })
-*/
 export default router

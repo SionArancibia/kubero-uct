@@ -1,5 +1,5 @@
 <template>
-  <v-form v-model="valid">
+  <v-form v-model="valid" class="app-form">
     <v-overlay v-model="loading" class="align-center justify-center">
       <v-progress-circular
         color="primary"
@@ -7,133 +7,133 @@
         size="64"
       ></v-progress-circular>
     </v-overlay>
-    <v-container>
+    <v-container class="app-form-page">
       <Breadcrumbs :items="breadcrumbItems"></Breadcrumbs>
-      <v-row>
-        <v-col cols="12" md="1" class="hidden-xs-and-down">
+      <header class="app-form-header">
+        <div class="app-form-header__icon" aria-hidden="true">
           <v-icon
-            size="48"
+            size="30"
             color="primary"
-            class="mr-2"
           >{{ deploymentstrategy == 'git' ? 'mdi-source-branch' : 'mdi-docker' }}</v-icon>
-        </v-col>
-        <v-col cols="12" sm="11" md="11" lg="11" xl="11">
-          <h1 v-if="app == 'new'">
+        </div>
+        <div class="app-form-header__copy">
+          <h1 v-if="app == 'new'" class="uct-h1">
             {{ $t("app.form.createNewApp", { pipeline: pipeline }) }}
           </h1>
-          <h1 v-if="app != 'new'">
+          <h1 v-if="app != 'new'" class="uct-h1">
             {{ $t("app.form.editApp", { app: app, pipeline: pipeline }) }}
           </h1>
-          <p class="text-justify">
-            {{ phase }}
-          </p>
-        </v-col>
-      </v-row>
-
-      <v-row v-if="app === 'new' && $route.query.template != undefined">
-        <v-col cols="12" md="8">
-          <v-alert outlined type="warning" prominent border="start">
-            {{ $t("app.form.warning") }}
-          </v-alert>
-        </v-col>
-      </v-row>
-
-      <v-row>
-        <v-col cols="12" md="6">
-          <v-text-field
-            v-model="name"
-            :rules="nameRules"
-            :counter="60"
-            :disabled="app != 'new'"
-            :label="$t('app.form.appName')"
-            v-on:input="changeName(name)"
-            required
-          ></v-text-field>
-        </v-col>
-        <v-col cols="12" md="2">
-          <!--
-        <v-switch
-            v-model="sleep"
-            hint="Sleep after 1 Minutes of inactivity"
+          <v-chip
+            class="app-form-header__phase"
             color="primary"
-            false-value="disabled"
-            true-value="60s"
-            true-icon="mdi-sleep"
-            false-icon="mdi-sleep-off"
-            label="Sleep"
-            :disabled="!kuberoConfig.sleepEnabled"
-            inset
-          ></v-switch>
-        -->
-        </v-col>
-      </v-row>
-
-      <v-row
-        v-for="(host, index) in ingress.hosts"
-        :key="index"
-        :style="index > 0 ? 'margin-top: -20px;' : ''"
-      >
-        <v-col cols="9" md="6">
-          <v-text-field
-            v-model="host.host"
-            :rules="domainRules"
-            :counter="60"
-            :label="$t('app.form.domain')"
-            required
-          ></v-text-field>
-        </v-col>
-        <v-col cols="2" md="2" pullright>
-          <v-switch
-            v-model="sslIndex[index]"
-            label="SSL"
-            density="compact"
-            color="primary"
-          ></v-switch>
-        </v-col>
-        <v-col cols="1" md="1">
-          <v-btn
-            v-if="index > 0"
-            elevation="2"
-            icon
+            prepend-icon="mdi-layers-outline"
             size="small"
-            @click="removeDomainLine(index)"
+            variant="tonal"
           >
-            <v-icon dark> mdi-minus </v-icon>
-          </v-btn>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col
-          cols="12"
-          style="margin-top: -20px; padding-top: -0px; padding-bottom: 40px"
-        >
-          <v-btn elevation="2" icon size="small" @click="addDomainLine()">
-            <v-icon dark> mdi-plus </v-icon>
-          </v-btn>
-        </v-col>
-      </v-row>
+            {{ phase }}
+          </v-chip>
+        </div>
+      </header>
 
-      <v-row>
-        <v-col cols="12" md="6">
-          <v-text-field
-            v-model="containerPort"
-            :label="$t('app.form.containerPort')"
-          ></v-text-field>
-        </v-col>
-      </v-row>
+      <v-alert
+        v-if="app === 'new' && $route.query.template != undefined"
+        class="app-template-warning"
+        type="warning"
+        variant="tonal"
+      >
+        {{ $t("app.form.warning") }}
+      </v-alert>
 
-      <v-row>
-        <v-col cols="12" md="7">
-          <v-switch
-            v-model="advanced"
-            :label="$t('app.form.advancedAppConfig')"
-            color="primary"
-            inset
-          ></v-switch>
-        </v-col>
-      </v-row>
+      <v-card
+        class="uct-card app-basics-card"
+        color="cardBackground"
+        elevation="0"
+      >
+        <v-card-text class="app-basics-card__body">
+          <v-row class="app-primary-fields">
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="name"
+                :rules="nameRules"
+                :counter="60"
+                :disabled="app != 'new'"
+                :label="$t('app.form.appName')"
+                v-on:input="changeName(name)"
+                required
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12" md="6">
+              <v-text-field
+                v-model="containerPort"
+                :label="$t('app.form.containerPort')"
+              ></v-text-field>
+            </v-col>
+          </v-row>
 
-      <v-expansion-panels v-model="panel" multiple>
+          <div class="app-domains">
+            <v-row
+              v-for="(host, index) in ingress.hosts"
+              :key="index"
+              class="app-domain-row"
+              align="center"
+            >
+              <v-col cols="12" sm="7" md="8">
+                <v-text-field
+                  v-model="host.host"
+                  :rules="domainRules"
+                  :counter="60"
+                  :label="$t('app.form.domain')"
+                  required
+                ></v-text-field>
+              </v-col>
+              <v-col cols="8" sm="3" md="3" class="app-domain-row__ssl">
+                <v-switch
+                  v-model="sslIndex[index]"
+                  label="SSL"
+                  color="primary"
+                  hide-details
+                ></v-switch>
+              </v-col>
+              <v-col cols="4" sm="2" md="1" class="app-domain-row__remove">
+                <v-btn
+                  v-if="index > 0"
+                  class="app-icon-action"
+                  color="primary"
+                  elevation="0"
+                  icon="mdi-minus"
+                  variant="tonal"
+                  :aria-label="$t('app.form.removeDomain')"
+                  :title="$t('app.form.removeDomain')"
+                  @click="removeDomainLine(index)"
+                ></v-btn>
+              </v-col>
+            </v-row>
+
+            <v-btn
+              class="app-add-domain-action"
+              color="primary"
+              elevation="0"
+              prepend-icon="mdi-plus"
+              variant="tonal"
+              @click="addDomainLine()"
+            >
+              {{ $t("app.form.addDomain") }}
+            </v-btn>
+          </div>
+
+          <div class="app-advanced-toggle">
+            <v-switch
+              v-model="advanced"
+              :label="$t('app.form.advancedAppConfig')"
+              color="primary"
+              hide-details
+              inset
+            ></v-switch>
+          </div>
+        </v-card-text>
+      </v-card>
+
+      <v-expansion-panels v-model="panel" class="app-config-panels" multiple>
         <!-- DEPLOYMENT -->
         <v-expansion-panel bg-color="rgb(var(--v-theme-cardBackground))">
           <v-expansion-panel-title
@@ -929,14 +929,16 @@
       </v-expansion-panels>
 
       <!-- ADDONS -->
-      <div class="uct-section-title pt-5">
-        {{ $t("app.titles.addOns") }}
+      <div class="app-addons-section">
+        <div class="uct-section-title">
+          {{ $t("app.titles.addOns") }}
+        </div>
+        <Addons :addons="addons" :appname="name" />
       </div>
-      <Addons :addons="addons" :appname="name" />
 
       <!-- ENV VAR OVERLAP DIALOG -->
       <v-dialog v-model="envOverlapDialog" max-width="800px" persistent>
-        <v-card color="cardBackground" class="uct-card">
+        <v-card color="cardBackground" class="uct-card uct-dialog-card app-overlap-dialog">
           <v-card-title class="text-h6 font-weight-bold">
             {{ $t("app.form.envVarConflicts") }}
           </v-card-title>
@@ -945,6 +947,7 @@
               {{ $t("app.form.envVarConflictsDescription") }}
             </p>
             <v-data-table
+              class="app-overlap-table"
               v-model="selectedOverlaps"
               :headers="overlapHeaders"
               :items="envOverlaps"
@@ -972,26 +975,30 @@
       </v-dialog>
 
       <!-- SUBMIT -->
-      <v-row class="pt-5">
-        <v-col cols="12" md="4">
-          <v-btn
-            color="primary"
-            v-if="app == 'new'"
-            elevation="2"
-            @click="createApp()"
-            :disabled="!valid"
-            >{{ $t("global.create") }}</v-btn
-          >
-          <v-btn
-            color="primary"
-            v-if="app != 'new'"
-            elevation="2"
-            @click="updateApp()"
-            :disabled="!valid"
-            >{{ $t("global.update") }}</v-btn
-          >
-        </v-col>
-      </v-row>
+      <div class="app-form-actions">
+        <v-btn
+          color="primary"
+          v-if="app == 'new'"
+          elevation="0"
+          prepend-icon="mdi-plus"
+          size="large"
+          variant="flat"
+          @click="createApp()"
+          :disabled="!valid"
+          >{{ $t("global.create") }}</v-btn
+        >
+        <v-btn
+          color="primary"
+          v-if="app != 'new'"
+          elevation="0"
+          prepend-icon="mdi-content-save-outline"
+          size="large"
+          variant="flat"
+          @click="updateApp()"
+          :disabled="!valid"
+          >{{ $t("global.update") }}</v-btn
+        >
+      </div>
     </v-container>
   </v-form>
 </template>
@@ -2489,15 +2496,291 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
-.v-expansion-panel-text {
-  background: cardBackground;
-}
-.v-expansion-panel-title {
-  background: cardBackground;
+<style lang="scss" scoped>
+.app-form-page {
+  max-width: 1120px;
+  padding: 24px 24px 48px;
 }
 
-.capability .theme--light.v-chip:not(.v-chip--active) {
-  background: #bbb;
+.app-form-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 10px 0 24px;
+}
+
+.app-form-header__icon {
+  display: grid;
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 14px;
+  background: rgba(var(--v-theme-primary), 0.1);
+}
+
+.app-form-header__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.app-form-header__copy .uct-h1 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.app-form-header__phase {
+  max-width: 100%;
+  font-weight: 600;
+}
+
+.app-template-warning {
+  margin-bottom: 20px;
+  border-radius: 12px;
+}
+
+.app-basics-card {
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.app-basics-card__body {
+  padding: 24px;
+}
+
+.app-primary-fields {
+  margin-bottom: 0;
+}
+
+.app-domains {
+  padding: 20px 12px;
+  border-top: 1px solid var(--uct-corp-gray-border);
+  border-bottom: 1px solid var(--uct-corp-gray-border);
+}
+
+.app-domain-row {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.app-domain-row + .app-domain-row {
+  margin-top: 4px;
+}
+
+.app-domain-row__ssl {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+}
+
+.app-domain-row__remove {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.app-icon-action {
+  width: 44px;
+  height: 44px;
+}
+
+.app-add-domain-action {
+  min-height: 44px;
+  margin: 4px 12px 0;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.app-advanced-toggle {
+  padding: 20px 12px 4px;
+}
+
+.app-config-panels {
+  display: flex;
+  width: 100%;
+  flex-flow: column nowrap;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.app-config-panels :deep(.v-expansion-panel) {
+  flex: 0 0 auto;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--uct-corp-gray-border);
+  border-radius: 12px !important;
+  background: rgb(var(--v-theme-cardBackground));
+  box-shadow: none;
+}
+
+.app-config-panels :deep(.v-expansion-panel::after) {
+  display: none;
+}
+
+.app-config-panels :deep(.v-expansion-panel-title) {
+  min-height: 58px;
+  padding: 0 20px;
+  background: rgba(var(--v-theme-secondary), 0.42) !important;
+  color: rgb(var(--v-theme-on-surface));
+  letter-spacing: 0.05em;
+}
+
+.app-config-panels :deep(.v-expansion-panel-title:hover) {
+  background: rgba(var(--v-theme-primary), 0.08) !important;
+}
+
+.app-config-panels :deep(.v-expansion-panel-title:focus-visible) {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: -3px;
+}
+
+.app-config-panels :deep(.v-expansion-panel--active > .v-expansion-panel-title) {
+  background: rgba(var(--v-theme-primary), 0.1) !important;
+  color: rgb(var(--v-theme-primary));
+}
+
+.app-config-panels :deep(.v-expansion-panel-text),
+.app-config-panels :deep(.v-expansion-panel-text__wrapper) {
+  background: rgb(var(--v-theme-cardBackground));
+}
+
+.app-config-panels :deep(.v-expansion-panel-text__wrapper) {
+  padding: 22px 20px 8px;
+}
+
+.app-basics-card :deep(.v-field),
+.app-config-panels :deep(.v-field),
+.app-overlap-dialog :deep(.v-field) {
+  border: 1px solid var(--uct-corp-gray-border);
+  border-radius: 8px;
+  background: rgba(var(--v-theme-secondary), 0.24);
+}
+
+.app-basics-card :deep(.v-field--focused),
+.app-config-panels :deep(.v-field--focused),
+.app-overlap-dialog :deep(.v-field--focused) {
+  box-shadow: 0 0 0 3px rgba(var(--v-theme-primary), 0.12);
+}
+
+.app-icon-action {
+  transition: background-color 160ms ease-out, transform 160ms ease-out;
+}
+
+.app-icon-action:focus-visible,
+.app-add-domain-action:focus-visible,
+.app-form-actions .v-btn:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 3px;
+}
+
+.app-icon-action:hover {
+  transform: translateY(-1px);
+}
+
+.app-addons-section {
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid var(--uct-corp-gray-border);
+}
+
+.app-addons-section > .uct-section-title {
+  margin-bottom: 16px;
+}
+
+.app-addons-section :deep(.v-card) {
+  border: 1px solid var(--uct-corp-gray-border);
+  border-radius: 12px;
+  box-shadow: none;
+}
+
+.app-overlap-table {
+  overflow: hidden;
+  border: 1px solid var(--uct-corp-gray-border);
+  border-radius: 8px;
+}
+
+.app-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 28px 0 8px;
+}
+
+.app-form-actions .v-btn {
+  min-width: 176px;
+  border-radius: 8px;
+  font-weight: 650;
+}
+
+@media (max-width: 959px) {
+  .app-form-page {
+    padding-inline: 20px;
+  }
+
+  .app-basics-card__body {
+    padding-inline: 20px;
+  }
+}
+
+@media (max-width: 599px) {
+  .app-form-page {
+    padding: 16px 12px 32px;
+  }
+
+  .app-form-header {
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+
+  .app-form-header__icon {
+    flex-basis: 48px;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+  }
+
+  .app-basics-card__body {
+    padding: 18px 16px;
+  }
+
+  .app-domains {
+    padding-inline: 4px;
+  }
+
+  .app-domain-row__ssl,
+  .app-domain-row__remove {
+    min-height: 48px;
+    padding-top: 0;
+  }
+
+  .app-domain-row__remove {
+    justify-content: flex-start;
+  }
+
+  .app-add-domain-action {
+    width: calc(100% - 24px);
+  }
+
+  .app-config-panels :deep(.v-expansion-panel-title) {
+    min-height: 54px;
+    padding-inline: 16px;
+  }
+
+  .app-config-panels :deep(.v-expansion-panel-text__wrapper) {
+    padding: 18px 14px 6px;
+  }
+
+  .app-form-actions .v-btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-icon-action {
+    transition: none;
+  }
 }
 </style>

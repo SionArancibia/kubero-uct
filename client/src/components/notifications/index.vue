@@ -1,8 +1,24 @@
 <template>
-  <v-container>
+  <v-container class="uct-management-page">
+    <header class="uct-page-header">
+      <div class="uct-page-header__identity">
+        <div class="uct-page-header__icon" aria-hidden="true">
+          <v-icon size="28" color="primary">mdi-bell-outline</v-icon>
+        </div>
+        <h1 class="uct-h1">{{ $t('notifications.name') }}</h1>
+      </div>
+      <v-btn
+        color="primary"
+        variant="flat"
+        prepend-icon="mdi-plus"
+        @click="openCreateDialog"
+      >
+        {{ $t('notifications.actions.create') }}
+      </v-btn>
+    </header>
     <v-row>
-      <v-col cols="12" md="12" lg="12" xl="6">
-        <v-expansion-panels multiple elevation="0" class="mb-6">
+      <v-col cols="12">
+        <v-expansion-panels multiple elevation="0" class="uct-help-panels">
           <v-expansion-panel>
           <v-expansion-panel-title class="text-h6 font-weight-bold">
             {{ $t('notifications.helpTitle') }}
@@ -14,18 +30,39 @@
         </v-expansion-panels>
       </v-col>
     </v-row>
+    <section class="uct-table-panel">
     <v-data-table
       :headers="headers"
       :items="notifications"
       :loading="loading"
-      class="elevation-0 border-0"
+      class="uct-pipeline-table"
       item-key="id"
       item-value="name"
       :search="search"
       show-expand
     >
+      <template #top>
+        <div class="uct-table-toolbar">
+          <v-text-field
+            v-model="search"
+            class="uct-table-search"
+            :label="$t('notifications.form.search')"
+            prepend-inner-icon="mdi-magnify"
+            variant="outlined"
+            density="compact"
+            hide-details
+            clearable
+          ></v-text-field>
+        </div>
+        <div class="uct-table-summary" aria-live="polite">
+          <span>{{ notifications.length }} · {{ $t('notifications.name') }}</span>
+        </div>
+      </template>
       <template v-slot:[`item.name`]="{ item }">
-        <span>{{ item.name }}</span>
+        <div class="uct-table-identity">
+          <v-icon :icon="getTypeIcon(item.type)" color="primary" size="21" aria-hidden="true"></v-icon>
+          <strong>{{ item.name }}</strong>
+        </div>
       </template>
       <template v-slot:[`item.type`]="{ item }">
         <v-chip :color="getTypeColor(item.type)" size="small" variant="tonal">
@@ -64,26 +101,32 @@
         </v-chip-group>
       </template>
       <template v-slot:[`item.actions`]="{ item }">
-        <v-btn elevation="0" variant="tonal" size="small" class="ma-2" @click="openEditDialog(item)">
-          <v-icon color="primary">mdi-pencil</v-icon>
-        </v-btn>
-        <v-btn elevation="0" variant="tonal" size="small" class="ma-2" @click="deleteNotification(item)">
-          <v-icon color="primary">mdi-delete</v-icon>  
-        </v-btn>
+        <div class="uct-table-actions">
+          <v-tooltip :text="$t('global.edit')" location="top">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" icon="mdi-pencil-outline" variant="text" size="small" :aria-label="$t('notifications.actions.edit')" @click="openEditDialog(item)"></v-btn>
+            </template>
+          </v-tooltip>
+          <v-tooltip :text="$t('global.delete')" location="top">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" icon="mdi-delete-outline" variant="text" size="small" color="error" :aria-label="$t('notifications.actions.delete')" @click="deleteNotification(item)"></v-btn>
+            </template>
+          </v-tooltip>
+        </div>
       </template>
       <template v-slot:expanded-row="{ columns, item }">
         <tr>
-          <td :colspan="columns.length" style="padding:0;">
-            <v-card class="ma-2 pa-2" outlined color="cardBackground">
+          <td :colspan="columns.length" class="uct-expanded-cell">
+            <v-card class="ma-2 pa-2 uct-card uct-expanded-card" color="cardBackground" elevation="0">
               <v-row>
                 <v-col cols="12" md="6">
-                  <v-list density="compact" style="background: inherit;">
+                  <v-list density="compact" class="uct-detail-list">
                     <v-list-item>
                       <v-list-item-title class="font-weight-bold">{{$t('notifications.form.config')}}</v-list-item-title>
                     </v-list-item>
                     <v-list-item v-if="item.config.url">
                       <v-list-item-subtitle>{{$t('notifications.form.url')}}</v-list-item-subtitle>
-                      <v-list-item-title class="text-truncate" style="max-width: 300px;">{{ item.config.url }}</v-list-item-title>
+                      <v-list-item-title class="text-truncate uct-detail-url">{{ item.config.url }}</v-list-item-title>
                     </v-list-item>
                     <v-list-item v-if="item.config.channel">
                       <v-list-item-subtitle>{{$t('notifications.form.channel')}}</v-list-item-subtitle>
@@ -96,7 +139,7 @@
                   </v-list>
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-list density="compact" style="background: inherit;">
+                  <v-list density="compact" class="uct-detail-list">
                     <v-list-item>
                       <v-list-item-title class="font-weight-bold">{{$t('notifications.form.pipelines')}}</v-list-item-title>
                     </v-list-item>
@@ -133,16 +176,10 @@
         </tr>
       </template>
     </v-data-table>
-    <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
-      <v-btn fab color="primary" style="margin-right: 6px;" @click="openCreateDialog">
-        <v-icon>mdi-plus</v-icon>
-        <span class="sr-only">{{ $t('notifications.actions.create') }}</span>
-      </v-btn>
-    </div>
-
+    </section>
     <!-- Edit Dialog -->
     <v-dialog v-model="editDialog" max-width="800px">
-      <v-card color="cardBackground" class="uct-card">
+      <v-card color="cardBackground" class="uct-card uct-dialog-card">
         <v-card-title class="text-h6 font-weight-bold">{{$t('notifications.actions.edit')}}</v-card-title>
         <v-card-text v-if="editedNotification">
           <v-form ref="editForm">
@@ -243,7 +280,7 @@
 
     <!-- Create Dialog -->
     <v-dialog v-model="createDialog" max-width="800px">
-      <v-card color="cardBackground" class="uct-card">
+      <v-card color="cardBackground" class="uct-card uct-dialog-card">
         <v-card-title class="text-h6 font-weight-bold">{{$t('notifications.actions.create')}}</v-card-title>
         <v-card-text>
           <v-form ref="createForm">

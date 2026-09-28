@@ -1,8 +1,24 @@
 <template>
-  <v-container>
+  <v-container class="uct-management-page">
+    <header class="uct-page-header">
+      <div class="uct-page-header__identity">
+        <div class="uct-page-header__icon" aria-hidden="true">
+          <v-icon size="28" color="primary">mdi-memory</v-icon>
+        </div>
+        <h1 class="uct-h1">{{ $t('podsizes.name') }}</h1>
+      </div>
+      <v-btn
+        color="primary"
+        variant="flat"
+        prepend-icon="mdi-plus"
+        @click="openCreateDialog"
+      >
+        {{ $t('podsizes.actions.create') }}
+      </v-btn>
+    </header>
     <v-row>
-      <v-col cols="12" md="12" lg="12" xl="6">
-        <v-expansion-panels multiple elevation="0" class="mb-6">
+      <v-col cols="12">
+        <v-expansion-panels multiple elevation="0" class="uct-help-panels">
           <v-expansion-panel>
             <v-expansion-panel-title class="text-h6 font-weight-bold">{{ $t('podsizes.helpTitle') }}</v-expansion-panel-title>
             <v-expansion-panel-text><div v-html="$t('podsizes.helpText')"></div></v-expansion-panel-text>
@@ -10,18 +26,39 @@
         </v-expansion-panels>
       </v-col>
     </v-row>
+    <section class="uct-table-panel">
     <v-data-table
       :headers="headers"
       :items="podsizes"
       :loading="loading"
-      class="elevation-0 border-0"
+      class="uct-pipeline-table"
       item-key="id"
       item-value="name"
       :search="search"
       show-expand
     >
+      <template #top>
+        <div class="uct-table-toolbar">
+          <v-text-field
+            v-model="search"
+            class="uct-table-search"
+            :label="$t('podsizes.form.search')"
+            prepend-inner-icon="mdi-magnify"
+            variant="outlined"
+            density="compact"
+            hide-details
+            clearable
+          ></v-text-field>
+        </div>
+        <div class="uct-table-summary" aria-live="polite">
+          <span>{{ podsizes.length }} · {{ $t('podsizes.name') }}</span>
+        </div>
+      </template>
       <template v-slot:[`item.name`]="{ item }">
-        <span>{{ item.name }}</span>
+        <div class="uct-table-identity">
+          <v-icon icon="mdi-memory" color="primary" size="21" aria-hidden="true"></v-icon>
+          <strong>{{ item.name }}</strong>
+        </div>
       </template>
       <template v-slot:[`item.description`]="{ item }">
         <span>{{ item.description }}</span>
@@ -33,20 +70,26 @@
         </span>
       </template>
       <template v-slot:[`item.actions`]="{ item }">
-        <v-btn elevation="0" variant="tonal" size="small" class="ma-2" @click="openEditDialog(item)">
-          <v-icon color="primary">mdi-pencil</v-icon>
-        </v-btn>
-        <v-btn elevation="0" variant="tonal" size="small" class="ma-2" @click="deletePodsize(item)">
-          <v-icon color="primary">mdi-delete</v-icon>  
-        </v-btn>
+        <div class="uct-table-actions">
+          <v-tooltip :text="$t('global.edit')" location="top">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" icon="mdi-pencil-outline" variant="text" size="small" :aria-label="$t('podsizes.actions.edit')" @click="openEditDialog(item)"></v-btn>
+            </template>
+          </v-tooltip>
+          <v-tooltip :text="$t('global.delete')" location="top">
+            <template #activator="{ props }">
+              <v-btn v-bind="props" icon="mdi-delete-outline" variant="text" size="small" color="error" :aria-label="$t('global.delete')" @click="deletePodsize(item)"></v-btn>
+            </template>
+          </v-tooltip>
+        </div>
       </template>
       <template v-slot:expanded-row="{ columns, item }">
         <tr>
-          <td :colspan="columns.length" style="padding:0;">
-            <v-card class="ma-2 pa-2 uct-card" color="cardBackground">
+          <td :colspan="columns.length" class="uct-expanded-cell">
+            <v-card class="ma-2 pa-2 uct-card uct-expanded-card" color="cardBackground" elevation="0">
               <v-row>
                 <v-col cols="12" md="6">
-                  <v-list density="compact" style="background: inherit;">
+                  <v-list density="compact" class="uct-detail-list">
                     <v-list-item>
                       <v-list-item-title class="font-weight-bold">Requests</v-list-item-title>
                     </v-list-item>
@@ -61,7 +104,7 @@
                   </v-list>
                 </v-col>
                 <v-col cols="12" md="6">
-                  <v-list density="compact" style="background: inherit;">
+                  <v-list density="compact" class="uct-detail-list">
                     <v-list-item>
                       <v-list-item-title class="font-weight-bold">Limits</v-list-item-title>
                     </v-list-item>
@@ -79,7 +122,7 @@
               <v-divider class="my-2"></v-divider>
               <v-row>
                 <v-col cols="12">
-                  <v-list density="compact" style="background: inherit;">
+                  <v-list density="compact" class="uct-detail-list">
                     <v-list-item>
                       <v-list-item-title class="font-weight-bold">{{ $t('podsizes.form.description') }}</v-list-item-title>
                     </v-list-item>
@@ -94,14 +137,9 @@
         </tr>
       </template>
     </v-data-table>
-    <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
-      <v-btn fab color="primary" style="margin-right: 6px;" @click="openCreateDialog">
-        <v-icon>mdi-plus</v-icon>
-        <span class="sr-only">{{ $t('podsizes.actions.create') }}</span>
-      </v-btn>
-    </div>
+    </section>
     <v-dialog v-model="editDialog" max-width="600px">
-      <v-card color="cardBackground" class="uct-card">
+      <v-card color="cardBackground" class="uct-card uct-dialog-card">
         <v-card-title class="text-h6 font-weight-bold">{{ $t('podsizes.actions.edit') }}</v-card-title>
         <v-card-text v-if="editedPodsize">
           <v-text-field v-model="editedPodsize.name" :label="$t('podsizes.form.name')"></v-text-field>
@@ -124,7 +162,7 @@
       </v-card>
     </v-dialog>
     <v-dialog v-model="createDialog" max-width="600px">
-      <v-card color="cardBackground" class="uct-card">
+      <v-card color="cardBackground" class="uct-card uct-dialog-card">
         <v-card-title class="text-h6 font-weight-bold">{{ $t('podsizes.actions.create') }}</v-card-title>
         <v-card-text>
           <v-text-field v-model="newPodsize.name" :label="$t('podsizes.form.name')"></v-text-field>
