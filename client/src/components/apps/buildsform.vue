@@ -92,6 +92,7 @@
 <script lang="ts">
 import axios from "axios";
 import { defineComponent } from 'vue'
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
 
 export default defineComponent({
   name: 'BuildsForm',
@@ -144,7 +145,7 @@ export default defineComponent({
             this.references = response.data
         })
         .catch(error => {
-            console.log('Error loading references', error)
+            notifyApiError(error, 'loadBuildReferences')
         })
     },
     saveBuild() {
@@ -161,13 +162,12 @@ export default defineComponent({
             reference: this.form.reference,
             dockerfilePath: this.form.dockerfilePath
         }
-        axios.post(`/api/deployments/build/${this.pipeline}/${this.phase}/${this.app}`, body)
-        .then(response => {
-            //console.log('Build submitted', response.data)
+        axios.post(`/api/deployments/build/${this.pipeline}/${this.phase}/${this.app}`, body, handledApiErrorConfig)
+        .then(() => {
             this.dialog = false
         })
         .catch(error => {
-            console.log('Error submitting build', error)
+            notifyApiError(error, 'submitBuild')
         })
     }
   }

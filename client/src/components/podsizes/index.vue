@@ -186,6 +186,7 @@
 import { defineComponent, ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useI18n } from 'vue-i18n'
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
 
 
 export default defineComponent({
@@ -238,19 +239,19 @@ export default defineComponent({
     }
     const saveEdit = async () => {
       try {
-        await axios.put(`/api/config/podsizes/${editedPodsize?.value?.id }`, editedPodsize.value)
+        await axios.put(`/api/config/podsizes/${editedPodsize?.value?.id }`, editedPodsize.value, handledApiErrorConfig)
         await loadPodsizes()
         editDialog.value = false
       } catch (e) {
-        console.error('Error saving podsize:', e)
+        notifyApiError(e, 'savePodsize')
       }
     }
     const deletePodsize = async (podsize: any) => {
       try {
-        await axios.delete(`/api/config/podsizes/${podsize.id}`)
+        await axios.delete(`/api/config/podsizes/${podsize.id}`, handledApiErrorConfig)
         await loadPodsizes()
       } catch (e) {
-        console.error('Error deleting podsize:', e)
+        notifyApiError(e, 'deletePodsize')
       }
     }
     const openCreateDialog = () => {
@@ -268,11 +269,11 @@ export default defineComponent({
       try {
         const payload = JSON.parse(JSON.stringify(newPodsize.value))
         delete payload.id
-        await axios.post('/api/config/podsizes', payload)
+        await axios.post('/api/config/podsizes', payload, handledApiErrorConfig)
         await loadPodsizes()
         createDialog.value = false
       } catch (e) {
-        console.error('Error creating podsize:', e)
+        notifyApiError(e, 'createPodsize')
       }
     }
     onMounted(() => {

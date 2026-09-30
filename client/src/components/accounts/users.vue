@@ -1,13 +1,5 @@
 <template>
   <v-container>
-    <v-alert
-      v-if="actionError"
-      type="error"
-      variant="tonal"
-      closable
-      class="mb-4"
-      @click:close="actionError = ''"
-    >{{ actionError }}</v-alert>
     <v-alert v-if="loadError" type="warning" variant="tonal" class="ma-4">
       <div class="d-flex align-center justify-space-between ga-4">
         <span>{{ $t('accounts.errors.loadUsers') }}</span>
@@ -146,15 +138,6 @@
       <v-card color="cardBackground" class="uct-card">
         <v-card-title class="text-h6 font-weight-bold">{{ $t('user.actions.edit') }}</v-card-title>
         <v-card-text>
-          <v-alert
-            v-if="actionError"
-            type="error"
-            variant="tonal"
-            closable
-            density="compact"
-            class="mb-4"
-            @click:close="actionError = ''"
-          >{{ actionError }}</v-alert>
           <v-text-field v-model="editedUser.username" :label="$t('user.username')"></v-text-field>
           <v-text-field v-model="editedUser.firstName" :label="$t('user.firstName')"></v-text-field>
           <v-text-field v-model="editedUser.lastName" :label="$t('user.lastName')"></v-text-field>
@@ -195,15 +178,6 @@
       <v-card color="cardBackground" class="uct-card">
         <v-card-title class="text-h6 font-weight-bold">{{ $t('user.actions.create') }}</v-card-title>
         <v-card-text>
-          <v-alert
-            v-if="actionError"
-            type="error"
-            variant="tonal"
-            closable
-            density="compact"
-            class="mb-4"
-            @click:close="actionError = ''"
-          >{{ actionError }}</v-alert>
           <v-text-field v-model="newUser.username" :label="$t('user.username')"></v-text-field>
           <v-text-field v-model="newUser.firstName" :label="$t('user.firstName')"></v-text-field>
           <v-text-field v-model="newUser.lastName" :label="$t('user.lastName')"></v-text-field>
@@ -272,6 +246,7 @@ import axios from 'axios'
 import { useDisplay } from 'vuetify'
 import { useAuthStore } from '../../stores/auth'
 import { useI18n } from 'vue-i18n'
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
 
 export default defineComponent({
   name: 'UserList',
@@ -432,16 +407,6 @@ export default defineComponent({
       loading.value = false
     }
 
-    // El server explica por qué rechaza una acción (último administrador, equipo
-    // protegido, id que ya no existe...). Antes solo iba a la consola y la
-    // pantalla parecía no hacer nada.
-    const actionError = ref('')
-    const errorText = (e: any): string => {
-      const message = e?.response?.data?.message
-      if (Array.isArray(message)) return message.join(', ')
-      return message || e?.message || 'Error'
-    }
-
     const loadTeams = async () => {
       try {
         const res = await axios.get('/api/groups')
@@ -461,7 +426,6 @@ export default defineComponent({
 
     const openEditUserDialog = async (user: User) => {
       editedUser.value = { ...user }
-      actionError.value = ''
       // los equipos y roles se pueden haber creado o borrado en otra pestaña
       // desde que se cargó esta pantalla: se recargan al abrir el formulario
       await Promise.all([loadTeams(), loadRoles()])
@@ -470,22 +434,20 @@ export default defineComponent({
 
     const saveEdit = async () => {
       try {
-        await axios.put(`/api/users/id/${editedUser.value.id}`, editedUser.value)
+        await axios.put(`/api/users/id/${editedUser.value.id}`, editedUser.value, handledApiErrorConfig)
         await loadUsers()
         editDialog.value = false
       } catch (e) {
-        console.error('Error saving user:', e)
-        actionError.value = errorText(e)
+        notifyApiError(e, 'saveUser')
       }
     }
 
     const deleteUser = async (user: User) => {
       try {
-        await axios.delete(`/api/users/id/${user.id}`)
+        await axios.delete(`/api/users/id/${user.id}`, handledApiErrorConfig)
         await loadUsers()
       } catch (e) {
-        console.error('Error deleting user:', e)
-        actionError.value = errorText(e)
+        notifyApiError(e, 'deleteUser')
       }
     }
 
@@ -502,7 +464,6 @@ export default defineComponent({
     }
 
     const openCreateDialog = async () => {
-      actionError.value = ''
       // Antes la lista de equipos se cargaba solo al abrir la pestaña: si un
       // equipo se borraba y se volvía a crear (id nuevo), el formulario seguía
       // ofreciendo el id viejo y el alta fallaba sin ningún mensaje hasta
@@ -523,12 +484,11 @@ export default defineComponent({
 
     const saveCreate = async () => {
       try {
-        await axios.post('/api/users', newUser.value)
+        await axios.post('/api/users', newUser.value, handledApiErrorConfig)
         await loadUsers()
         createDialog.value = false
       } catch (e) {
-        console.error('Error creating user:', e)
-        actionError.value = errorText(e)
+        notifyApiError(e, 'createUser')
       }
     }
 
@@ -545,20 +505,19 @@ export default defineComponent({
       try {
         await axios.put(`/api/users/id/${editedUser.value.id}/password`, {
           password: editedUser.value.password,
-        })
+        }, handledApiErrorConfig)
         changePasswordDialog.value = false
       } catch (e) {
-        console.error('Error changing password:', e)
+        notifyApiError(e, 'changeUserPassword')
       }
     }
 
     const deleteGroupFromUser = async (team: any, user: User) => {
       try {
-        await axios.delete(`/api/users/${user.id}/groups/${team.id}`)
+        await axios.delete(`/api/users/${user.id}/groups/${team.id}`, handledApiErrorConfig)
         await loadUsers()
       } catch (e) {
-        console.error('Error removing group from user:', e)
-        actionError.value = errorText(e)
+        notifyApiError(e, 'removeUserTeam')
       }
     }
 
@@ -600,7 +559,6 @@ export default defineComponent({
       createDialog,
       newUser,
       openCreateDialog,
-      actionError,
       changePasswordDialog,
       openChangePasswordDialog,
       saveChangePassword,

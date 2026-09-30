@@ -382,6 +382,7 @@
 import { defineComponent, ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useI18n } from 'vue-i18n'
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
 
 export default defineComponent({
   name: 'NotificationsList',
@@ -472,7 +473,7 @@ export default defineComponent({
         const res = await axios.get('/api/notifications')
         notifications.value = res.data.data || res.data || []
       } catch (e) {
-        console.error('Error loading notifications:', e)
+        notifyApiError(e, 'loadNotifications')
         notifications.value = []
       }
       loading.value = false
@@ -482,10 +483,10 @@ export default defineComponent({
       try {
         await axios.put(`/api/notifications/${notification.id}`, {
           enabled: notification.enabled,
-        })
+        }, handledApiErrorConfig)
         await loadNotifications()
       } catch (e) {
-        console.error('Error toggling notification:', e)
+        notifyApiError(e, 'toggleNotification')
         // Revert the change on error
         notification.enabled = !notification.enabled
       }
@@ -498,21 +499,21 @@ export default defineComponent({
 
     const saveEdit = async () => {
       try {
-        await axios.put(`/api/notifications/${editedNotification.value?.id}`, editedNotification.value)
+        await axios.put(`/api/notifications/${editedNotification.value?.id}`, editedNotification.value, handledApiErrorConfig)
         await loadNotifications()
         editDialog.value = false
       } catch (e) {
-        console.error('Error saving notification:', e)
+        notifyApiError(e, 'saveNotification')
       }
     }
 
     const deleteNotification = async (notification: Notification) => {
       if (confirm(`Are you sure you want to delete the notification "${notification.name}"?`)) {
         try {
-          await axios.delete(`/api/notifications/${notification.id}`)
+          await axios.delete(`/api/notifications/${notification.id}`, handledApiErrorConfig)
           await loadNotifications()
         } catch (e) {
-          console.error('Error deleting notification:', e)
+          notifyApiError(e, 'deleteNotification')
         }
       }
     }
@@ -533,19 +534,18 @@ export default defineComponent({
       try {
         const payload = JSON.parse(JSON.stringify(newNotification.value))
         delete payload.id
-        await axios.post('/api/notifications', payload)
+        await axios.post('/api/notifications', payload, handledApiErrorConfig)
         await loadNotifications()
         createDialog.value = false
       } catch (e) {
-        console.error('Error creating notification:', e)
+        notifyApiError(e, 'createNotification')
       }
     }
 
     const loadPipelinesList = async () => {
-        const self = this;
         const response = await axios.get(`/api/pipelines`)
         .catch(error => {
-            console.log(error);
+            notifyApiError(error, 'loadNotificationPipelines');
         });
         if (!response) return;
         response.data.items.forEach((item: any) => {

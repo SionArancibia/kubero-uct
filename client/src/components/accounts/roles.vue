@@ -1,6 +1,5 @@
 <template>
   <v-container>
-    <v-alert v-if="actionError" type="error" variant="tonal" closable class="ma-4" @click:close="actionError = ''">{{ actionError }}</v-alert>
     <v-alert v-if="loadError" type="warning" variant="tonal" class="ma-4">
       <div class="account-alert-content">
         <span>{{ $t('accounts.errors.loadRoles') }}</span>
@@ -361,6 +360,7 @@ import axios from 'axios'
 import { useDisplay } from 'vuetify'
 import { useAuthStore } from '../../stores/auth'
 import { useI18n } from 'vue-i18n'
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
 
 export default defineComponent({
   name: 'RolesTable',
@@ -382,7 +382,6 @@ export default defineComponent({
     const roleTable = ref<{ $el?: HTMLElement } | null>(null)
     const loading = ref(true)
     const loadError = ref(false)
-    const actionError = ref('')
     const search = ref<string | null>('')
     const page = ref(1)
     const itemsPerPage = ref(10)
@@ -471,20 +470,20 @@ export default defineComponent({
 
     const saveEdit = async () => {
       try {
-        await axios.put(`/api/roles/${editedRole.value.id}`, editedRole.value)
+        await axios.put(`/api/roles/${editedRole.value.id}`, editedRole.value, handledApiErrorConfig)
         await loadRoles()
         editDialog.value = false
       } catch (e) {
-        actionError.value = errorText(e)
+        notifyApiError(e, 'saveRole')
       }
     }
 
     const deleteRole = async (role: Role) => {
       try {
-        await axios.delete(`/api/roles/${role.id}`)
+        await axios.delete(`/api/roles/${role.id}`, handledApiErrorConfig)
         await loadRoles()
       } catch (e) {
-        actionError.value = errorText(e)
+        notifyApiError(e, 'deleteRole')
       }
     }
 
@@ -499,11 +498,11 @@ export default defineComponent({
 
     const saveCreate = async () => {
       try {
-        await axios.post('/api/roles', newRole.value)
+        await axios.post('/api/roles', newRole.value, handledApiErrorConfig)
         await loadRoles()
         createDialog.value = false
       } catch (e) {
-        actionError.value = errorText(e)
+        notifyApiError(e, 'createRole')
       }
     }
 /*
@@ -552,12 +551,6 @@ export default defineComponent({
         level: t(`roles.levels.${level}`),
       })
     }
-    const errorText = (e: any): string => {
-      const message = e?.response?.data?.message
-      if (Array.isArray(message)) return message.join(', ')
-      return message || e?.message || t('accounts.errors.action')
-    }
-      
     onMounted(() => {
       loadRoles()
     })
@@ -568,7 +561,6 @@ export default defineComponent({
       headers,
       loading,
       loadError,
-      actionError,
       loadRoles,
       search,
       filteredRoles,
