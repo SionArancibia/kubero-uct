@@ -1,8 +1,5 @@
 <template>
   <v-container>
-    <v-alert v-if="actionError" type="error" variant="tonal" closable class="ma-4 mb-0" @click:close="actionError = ''">
-      {{ actionError }}
-    </v-alert>
     <v-alert v-if="loadError" type="warning" variant="tonal" class="ma-4">
       <div class="account-alert-content">
         <span>{{ $t('accounts.errors.loadTokens') }}</span>
@@ -101,7 +98,6 @@ export default defineComponent({
     const tokenTable = ref<{ $el?: HTMLElement } | null>(null)
     const loading = ref(true)
     const loadError = ref(false)
-    const actionError = ref('')
     const search = ref<string | null>('')
     const page = ref(1)
     const itemsPerPage = ref(10)
@@ -161,14 +157,14 @@ export default defineComponent({
         await axios.delete(`/api/tokens/${token.id}`, handledApiErrorConfig)
         await loadTokens()
       } catch (error) {
-        actionError.value = notifyApiError(error, 'deleteToken')?.message ?? ''
+        notifyApiError(error, 'deleteToken')
       }
     }
 
     onMounted(loadTokens)
 
     return {
-      tokenTable, headers, loading, loadError, actionError, loadTokens, search, filteredTokens,
+      tokenTable, headers, loading, loadError, loadTokens, search, filteredTokens,
       hasActiveFilters, resetFilters, resultSummary, page, itemsPerPage, pageSizeOptions, pageCount,
       paginationVisible, pageRange, deleteToken, writeUserPermission,
     }

@@ -37,7 +37,7 @@ const notificationStore = useNotificationStore()
 .notification-center {
   position: fixed;
   z-index: 2500;
-  top: 66px;
+  top: max(16px, env(safe-area-inset-top));
   right: 16px;
   width: min(400px, calc(100vw - 32px));
   pointer-events: none;
@@ -86,7 +86,7 @@ const notificationStore = useNotificationStore()
 
 @media (max-width: 600px) {
   .notification-center {
-    top: 58px;
+    top: max(12px, env(safe-area-inset-top));
     right: 12px;
     left: 12px;
     width: auto;

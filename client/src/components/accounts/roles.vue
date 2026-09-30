@@ -1,6 +1,5 @@
 <template>
   <v-container>
-    <v-alert v-if="actionError" type="error" variant="tonal" closable class="ma-4" @click:close="actionError = ''">{{ actionError }}</v-alert>
     <v-alert v-if="loadError" type="warning" variant="tonal" class="ma-4">
       <div class="account-alert-content">
         <span>{{ $t('accounts.errors.loadRoles') }}</span>
@@ -383,7 +382,6 @@ export default defineComponent({
     const roleTable = ref<{ $el?: HTMLElement } | null>(null)
     const loading = ref(true)
     const loadError = ref(false)
-    const actionError = ref('')
     const search = ref<string | null>('')
     const page = ref(1)
     const itemsPerPage = ref(10)
@@ -476,7 +474,7 @@ export default defineComponent({
         await loadRoles()
         editDialog.value = false
       } catch (e) {
-        actionError.value = notifyApiError(e, 'saveRole')?.message ?? ''
+        notifyApiError(e, 'saveRole')
       }
     }
 
@@ -485,7 +483,7 @@ export default defineComponent({
         await axios.delete(`/api/roles/${role.id}`, handledApiErrorConfig)
         await loadRoles()
       } catch (e) {
-        actionError.value = notifyApiError(e, 'deleteRole')?.message ?? ''
+        notifyApiError(e, 'deleteRole')
       }
     }
 
@@ -504,7 +502,7 @@ export default defineComponent({
         await loadRoles()
         createDialog.value = false
       } catch (e) {
-        actionError.value = notifyApiError(e, 'createRole')?.message ?? ''
+        notifyApiError(e, 'createRole')
       }
     }
 /*
@@ -563,7 +561,6 @@ export default defineComponent({
       headers,
       loading,
       loadError,
-      actionError,
       loadRoles,
       search,
       filteredRoles,

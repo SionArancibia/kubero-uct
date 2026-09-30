@@ -1,13 +1,5 @@
 <template>
   <v-container>
-    <v-alert
-      v-if="actionError"
-      type="error"
-      variant="tonal"
-      closable
-      class="mb-4"
-      @click:close="actionError = ''"
-    >{{ actionError }}</v-alert>
     <v-alert v-if="loadError" type="warning" variant="tonal" class="ma-4">
       <div class="d-flex align-center justify-space-between ga-4">
         <span>{{ $t('accounts.errors.loadUsers') }}</span>
@@ -146,15 +138,6 @@
       <v-card color="cardBackground" class="uct-card">
         <v-card-title class="text-h6 font-weight-bold">{{ $t('user.actions.edit') }}</v-card-title>
         <v-card-text>
-          <v-alert
-            v-if="actionError"
-            type="error"
-            variant="tonal"
-            closable
-            density="compact"
-            class="mb-4"
-            @click:close="actionError = ''"
-          >{{ actionError }}</v-alert>
           <v-text-field v-model="editedUser.username" :label="$t('user.username')"></v-text-field>
           <v-text-field v-model="editedUser.firstName" :label="$t('user.firstName')"></v-text-field>
           <v-text-field v-model="editedUser.lastName" :label="$t('user.lastName')"></v-text-field>
@@ -195,15 +178,6 @@
       <v-card color="cardBackground" class="uct-card">
         <v-card-title class="text-h6 font-weight-bold">{{ $t('user.actions.create') }}</v-card-title>
         <v-card-text>
-          <v-alert
-            v-if="actionError"
-            type="error"
-            variant="tonal"
-            closable
-            density="compact"
-            class="mb-4"
-            @click:close="actionError = ''"
-          >{{ actionError }}</v-alert>
           <v-text-field v-model="newUser.username" :label="$t('user.username')"></v-text-field>
           <v-text-field v-model="newUser.firstName" :label="$t('user.firstName')"></v-text-field>
           <v-text-field v-model="newUser.lastName" :label="$t('user.lastName')"></v-text-field>
@@ -433,8 +407,6 @@ export default defineComponent({
       loading.value = false
     }
 
-    const actionError = ref('')
-
     const loadTeams = async () => {
       try {
         const res = await axios.get('/api/groups')
@@ -454,7 +426,6 @@ export default defineComponent({
 
     const openEditUserDialog = async (user: User) => {
       editedUser.value = { ...user }
-      actionError.value = ''
       // los equipos y roles se pueden haber creado o borrado en otra pestaña
       // desde que se cargó esta pantalla: se recargan al abrir el formulario
       await Promise.all([loadTeams(), loadRoles()])
@@ -467,7 +438,7 @@ export default defineComponent({
         await loadUsers()
         editDialog.value = false
       } catch (e) {
-        actionError.value = notifyApiError(e, 'saveUser')?.message ?? ''
+        notifyApiError(e, 'saveUser')
       }
     }
 
@@ -476,7 +447,7 @@ export default defineComponent({
         await axios.delete(`/api/users/id/${user.id}`, handledApiErrorConfig)
         await loadUsers()
       } catch (e) {
-        actionError.value = notifyApiError(e, 'deleteUser')?.message ?? ''
+        notifyApiError(e, 'deleteUser')
       }
     }
 
@@ -493,7 +464,6 @@ export default defineComponent({
     }
 
     const openCreateDialog = async () => {
-      actionError.value = ''
       // Antes la lista de equipos se cargaba solo al abrir la pestaña: si un
       // equipo se borraba y se volvía a crear (id nuevo), el formulario seguía
       // ofreciendo el id viejo y el alta fallaba sin ningún mensaje hasta
@@ -518,7 +488,7 @@ export default defineComponent({
         await loadUsers()
         createDialog.value = false
       } catch (e) {
-        actionError.value = notifyApiError(e, 'createUser')?.message ?? ''
+        notifyApiError(e, 'createUser')
       }
     }
 
@@ -547,7 +517,7 @@ export default defineComponent({
         await axios.delete(`/api/users/${user.id}/groups/${team.id}`, handledApiErrorConfig)
         await loadUsers()
       } catch (e) {
-        actionError.value = notifyApiError(e, 'removeUserTeam')?.message ?? ''
+        notifyApiError(e, 'removeUserTeam')
       }
     }
 
@@ -589,7 +559,6 @@ export default defineComponent({
       createDialog,
       newUser,
       openCreateDialog,
-      actionError,
       changePasswordDialog,
       openChangePasswordDialog,
       saveChangePassword,

@@ -1,13 +1,5 @@
 <template>
   <v-container>
-    <v-alert
-      v-if="actionError"
-      type="error"
-      variant="tonal"
-      closable
-      class="mb-4"
-      @click:close="actionError = ''"
-    >{{ actionError }}</v-alert>
     <v-alert v-if="loadError" type="warning" variant="tonal" class="ma-4">
       <div class="account-alert-content">
         <span>{{ $t('accounts.errors.loadTeams') }}</span>
@@ -86,15 +78,6 @@
       <v-card color="cardBackground" class="uct-card">
         <v-card-title class="text-h6 font-weight-bold">{{ $t('teams.actions.edit') }}</v-card-title>
         <v-card-text>
-          <v-alert
-            v-if="actionError"
-            type="error"
-            variant="tonal"
-            closable
-            density="compact"
-            class="mb-4"
-            @click:close="actionError = ''"
-          >{{ actionError }}</v-alert>
           <v-text-field v-model="editedTeam.name" :label="$t('teams.form.name')"></v-text-field>
           <v-text-field
             v-model="editedTeam.description"
@@ -117,15 +100,6 @@
       <v-card color="cardBackground" class="uct-card">
         <v-card-title class="text-h6 font-weight-bold">{{ $t('teams.actions.create') }}</v-card-title>
         <v-card-text>
-          <v-alert
-            v-if="actionError"
-            type="error"
-            variant="tonal"
-            closable
-            density="compact"
-            class="mb-4"
-            @click:close="actionError = ''"
-          >{{ actionError }}</v-alert>
           <v-text-field v-model="newTeam.name" :label="$t('teams.form.name')"></v-text-field>
           <v-text-field
             v-model="newTeam.description"
@@ -210,8 +184,6 @@ export default defineComponent({
       wrapper.setAttribute('aria-label', t('accounts.table.tableRegion', { section: t('accounts.teams') }))
     }
 
-    const actionError = ref('')
-
     const loadTeams = async () => {
       loading.value = true
       loadError.value = false
@@ -227,7 +199,6 @@ export default defineComponent({
     }
 
     const openEditTeamDialog = (group: Team) => {
-      actionError.value = ''
       editedTeam.value = { ...group }
       editDialog.value = true
     }
@@ -238,7 +209,7 @@ export default defineComponent({
         await loadTeams()
         editDialog.value = false
       } catch (e) {
-        actionError.value = notifyApiError(e, 'saveTeam')?.message ?? ''
+        notifyApiError(e, 'saveTeam')
       }
     }
 
@@ -247,12 +218,11 @@ export default defineComponent({
         await axios.delete(`/api/groups/${group.id}`, handledApiErrorConfig)
         await loadTeams()
       } catch (e) {
-        actionError.value = notifyApiError(e, 'deleteTeam')?.message ?? ''
+        notifyApiError(e, 'deleteTeam')
       }
     }
 
     const openCreateDialog = () => {
-      actionError.value = ''
       newTeam.value = { name: '' }
       createDialog.value = true
     }
@@ -263,7 +233,7 @@ export default defineComponent({
         await loadTeams()
         createDialog.value = false
       } catch (e) {
-        actionError.value = notifyApiError(e, 'createTeam')?.message ?? ''
+        notifyApiError(e, 'createTeam')
       }
     }
 
@@ -297,7 +267,6 @@ export default defineComponent({
       saveEdit,
       deleteTeam,
       openCreateDialog,
-      actionError,
       saveCreate,
       writeUserPermission,
     }

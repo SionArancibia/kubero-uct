@@ -38,10 +38,6 @@
       </div>
     </v-alert>
 
-    <v-alert v-if="deleteError" type="error" variant="tonal" closable class="mb-6" @click:close="deleteError = false">
-      {{ $t('pipeline.list.deleteError') }}
-    </v-alert>
-
     <section v-if="clusterConnected" class="pipeline-panel">
       <div class="pipeline-toolbar">
         <v-text-field
@@ -208,7 +204,6 @@ const socket = kuberoStore.kubero.socket as { on?: (event: string, callback: () 
 const pipelines = ref<Pipeline[]>([])
 const loading = ref(true)
 const loadError = ref(false)
-const deleteError = ref(false)
 const deletingName = ref('')
 const search = ref('')
 const teamFilter = ref('all')
@@ -315,12 +310,10 @@ async function deletePipeline(pipeline: string) {
   if (!result.isConfirmed) return
 
   deletingName.value = pipeline
-  deleteError.value = false
   try {
     await axios.delete(`/api/pipelines/${encodeURIComponent(pipeline)}`, handledApiErrorConfig)
     pipelines.value = pipelines.value.filter((item) => item.name !== pipeline)
   } catch (error) {
-    deleteError.value = true
     notifyApiError(error, 'deletePipeline')
   } finally {
     deletingName.value = ''
