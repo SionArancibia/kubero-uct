@@ -53,6 +53,7 @@
 
 <script lang="ts">
 import axios from "axios";
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
 import { defineComponent } from "vue";
 import FormGeneral from "./form-general.vue";
 import FormDeployment from "./form-deployment.vue";
@@ -498,12 +499,9 @@ export default defineComponent({
       );
 
       axios
-        .post(`/api/config`, self.settings)
-        .then((response) => {
-          console.log("saveSettings", response);
-        })
+        .post(`/api/config`, self.settings, handledApiErrorConfig)
         .catch((error) => {
-          console.log("saveSettings", error);
+          notifyApiError(error, 'saveSettings');
         });
     },
     async loadSettings() {
@@ -512,10 +510,9 @@ export default defineComponent({
         .get(`/api/config`)
         .then((response) => {
           self.settings = response.data;
-          console.log("loadSettings", self.settings);
         })
         .catch((error) => {
-          console.log("loadSettings", error);
+          notifyApiError(error, 'loadSettings');
         });
     },
   },

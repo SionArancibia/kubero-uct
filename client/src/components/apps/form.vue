@@ -1008,6 +1008,7 @@ import axios from "axios";
 import Addons from "./addons.vue";
 import { defineComponent } from "vue";
 import { useKuberoStore } from "../../stores/kubero";
+import { handledApiErrorConfig, notifyApiError } from "../../utils/apiFeedback";
 import Breadcrumbs from "../breadcrumbs.vue";
 import Swal from "sweetalert2";
 
@@ -2107,11 +2108,12 @@ export default defineComponent({
 
         await axios.put(
           `/api/apps/${this.pipeline}/${this.phase}/${this.app}/${this.resourceVersion}`,
-          postdata
+          postdata,
+          handledApiErrorConfig
         );
         this.$router.push(`/pipeline/${this.pipeline}/apps`);
       } catch (error) {
-        console.log(error);
+        notifyApiError(error, "updateApp");
       } finally {
         this.loading = false;
       }
@@ -2238,12 +2240,13 @@ export default defineComponent({
 */
         await axios.post(
           `/api/apps/${this.pipeline}/${this.phase}/${this.app}`,
-          postdata
+          postdata,
+          handledApiErrorConfig
         );
         this.name = "";
         this.$router.push({ path: "/pipeline/" + this.pipeline + "/apps" });
       } catch (error) {
-        console.log(error);
+        notifyApiError(error, "createApp");
       } finally {
         this.loading = false;
       }

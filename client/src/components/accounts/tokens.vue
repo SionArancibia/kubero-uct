@@ -82,6 +82,7 @@ import axios from 'axios'
 import { useDisplay } from 'vuetify'
 import { useAuthStore } from '../../stores/auth'
 import { useI18n } from 'vue-i18n'
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
 
 export default defineComponent({
   name: 'TokensTable',
@@ -157,11 +158,10 @@ export default defineComponent({
     }
     const deleteToken = async (token: Token) => {
       try {
-        await axios.delete(`/api/tokens/${token.id}`)
+        await axios.delete(`/api/tokens/${token.id}`, handledApiErrorConfig)
         await loadTokens()
       } catch (error) {
-        const message = (error as any)?.response?.data?.message
-        actionError.value = Array.isArray(message) ? message.join(', ') : message || (error as Error)?.message || t('accounts.errors.action')
+        actionError.value = notifyApiError(error, 'deleteToken')?.message ?? ''
       }
     }
 

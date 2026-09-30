@@ -272,6 +272,7 @@ import axios from 'axios'
 import { useDisplay } from 'vuetify'
 import { useAuthStore } from '../../stores/auth'
 import { useI18n } from 'vue-i18n'
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
 
 export default defineComponent({
   name: 'UserList',
@@ -432,15 +433,7 @@ export default defineComponent({
       loading.value = false
     }
 
-    // El server explica por qué rechaza una acción (último administrador, equipo
-    // protegido, id que ya no existe...). Antes solo iba a la consola y la
-    // pantalla parecía no hacer nada.
     const actionError = ref('')
-    const errorText = (e: any): string => {
-      const message = e?.response?.data?.message
-      if (Array.isArray(message)) return message.join(', ')
-      return message || e?.message || 'Error'
-    }
 
     const loadTeams = async () => {
       try {
@@ -470,22 +463,20 @@ export default defineComponent({
 
     const saveEdit = async () => {
       try {
-        await axios.put(`/api/users/id/${editedUser.value.id}`, editedUser.value)
+        await axios.put(`/api/users/id/${editedUser.value.id}`, editedUser.value, handledApiErrorConfig)
         await loadUsers()
         editDialog.value = false
       } catch (e) {
-        console.error('Error saving user:', e)
-        actionError.value = errorText(e)
+        actionError.value = notifyApiError(e, 'saveUser')?.message ?? ''
       }
     }
 
     const deleteUser = async (user: User) => {
       try {
-        await axios.delete(`/api/users/id/${user.id}`)
+        await axios.delete(`/api/users/id/${user.id}`, handledApiErrorConfig)
         await loadUsers()
       } catch (e) {
-        console.error('Error deleting user:', e)
-        actionError.value = errorText(e)
+        actionError.value = notifyApiError(e, 'deleteUser')?.message ?? ''
       }
     }
 
@@ -523,12 +514,11 @@ export default defineComponent({
 
     const saveCreate = async () => {
       try {
-        await axios.post('/api/users', newUser.value)
+        await axios.post('/api/users', newUser.value, handledApiErrorConfig)
         await loadUsers()
         createDialog.value = false
       } catch (e) {
-        console.error('Error creating user:', e)
-        actionError.value = errorText(e)
+        actionError.value = notifyApiError(e, 'createUser')?.message ?? ''
       }
     }
 
@@ -545,20 +535,19 @@ export default defineComponent({
       try {
         await axios.put(`/api/users/id/${editedUser.value.id}/password`, {
           password: editedUser.value.password,
-        })
+        }, handledApiErrorConfig)
         changePasswordDialog.value = false
       } catch (e) {
-        console.error('Error changing password:', e)
+        notifyApiError(e, 'changeUserPassword')
       }
     }
 
     const deleteGroupFromUser = async (team: any, user: User) => {
       try {
-        await axios.delete(`/api/users/${user.id}/groups/${team.id}`)
+        await axios.delete(`/api/users/${user.id}/groups/${team.id}`, handledApiErrorConfig)
         await loadUsers()
       } catch (e) {
-        console.error('Error removing group from user:', e)
-        actionError.value = errorText(e)
+        actionError.value = notifyApiError(e, 'removeUserTeam')?.message ?? ''
       }
     }
 

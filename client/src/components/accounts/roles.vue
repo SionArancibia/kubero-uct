@@ -361,6 +361,7 @@ import axios from 'axios'
 import { useDisplay } from 'vuetify'
 import { useAuthStore } from '../../stores/auth'
 import { useI18n } from 'vue-i18n'
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
 
 export default defineComponent({
   name: 'RolesTable',
@@ -471,20 +472,20 @@ export default defineComponent({
 
     const saveEdit = async () => {
       try {
-        await axios.put(`/api/roles/${editedRole.value.id}`, editedRole.value)
+        await axios.put(`/api/roles/${editedRole.value.id}`, editedRole.value, handledApiErrorConfig)
         await loadRoles()
         editDialog.value = false
       } catch (e) {
-        actionError.value = errorText(e)
+        actionError.value = notifyApiError(e, 'saveRole')?.message ?? ''
       }
     }
 
     const deleteRole = async (role: Role) => {
       try {
-        await axios.delete(`/api/roles/${role.id}`)
+        await axios.delete(`/api/roles/${role.id}`, handledApiErrorConfig)
         await loadRoles()
       } catch (e) {
-        actionError.value = errorText(e)
+        actionError.value = notifyApiError(e, 'deleteRole')?.message ?? ''
       }
     }
 
@@ -499,11 +500,11 @@ export default defineComponent({
 
     const saveCreate = async () => {
       try {
-        await axios.post('/api/roles', newRole.value)
+        await axios.post('/api/roles', newRole.value, handledApiErrorConfig)
         await loadRoles()
         createDialog.value = false
       } catch (e) {
-        actionError.value = errorText(e)
+        actionError.value = notifyApiError(e, 'createRole')?.message ?? ''
       }
     }
 /*
@@ -552,12 +553,6 @@ export default defineComponent({
         level: t(`roles.levels.${level}`),
       })
     }
-    const errorText = (e: any): string => {
-      const message = e?.response?.data?.message
-      if (Array.isArray(message)) return message.join(', ')
-      return message || e?.message || t('accounts.errors.action')
-    }
-      
     onMounted(() => {
       loadRoles()
     })

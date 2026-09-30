@@ -11,16 +11,15 @@
   import NavDrawer from './NavDrawer.vue'
   import DefaultView from './View.vue'
   
-  import { SweetAlertIcon} from 'sweetalert2'
-  import Swal from 'sweetalert2'
-
 </script>
 
 <script lang="ts">
 
 import { useKuberoStore } from '../../stores/kubero'
+import { useAuthStore } from '../../stores/auth'
 import { useCookies } from "vue3-cookies";
 import { useSocketIO } from '../../socket.io';
+import { useNotificationStore } from '../../stores/notifications';
 
 const { cookies } = useCookies();
 const token = cookies.get("kubero.JWT_TOKEN");
@@ -30,6 +29,8 @@ const { socket } = useSocketIO(token);
 // Write socket to pinia
 const kuberoStore = useKuberoStore();
 kuberoStore.kubero.socket = socket;
+const authStore = useAuthStore();
+const notificationStore = useNotificationStore();
 
 type Message = {
     name: string,
@@ -45,58 +46,46 @@ type Message = {
 }
 
 socket.on('newApp', (message: Message) => {
-    triggerToast('success', 'App '+message.action, message.message);
+    triggerToast('App', message);
 });
 socket.on('updateApp', (message: Message) => {
-    triggerToast('success', 'App '+message.action, message.message);
+    triggerToast('App', message);
 });
 socket.on('deleteApp', (message: Message) => {
-    triggerToast('success', 'App '+message.action, message.message);
+    triggerToast('App', message);
 });
 socket.on('restartApp', (message: Message) => {
-    triggerToast('success', 'App '+message.action, message.message);
+    triggerToast('App', message);
 });
 socket.on('rebuildApp', (message: Message) => {
-    triggerToast('success', 'App '+message.action, message.message);
+    triggerToast('App', message);
 });
 socket.on('handleWebhookPush', (message: Message) => {
-    triggerToast('success', 'App '+message.action, message.message);
+    triggerToast('App', message);
 });
 socket.on('deployApp', (message: Message) => {
-    triggerToast('success', 'App '+message.action, message.message);
+    triggerToast('App', message);
 });
 socket.on('newBuild', (message: Message) => {
-    triggerToast('success', 'App '+message.action, message.message);
+    triggerToast('App', message);
 });
 
 socket.on('newPipeline', (message: Message) => {
-    triggerToast('success', 'Pipeline '+message.action, message.message);
+    triggerToast('Pipeline', message);
 });
 socket.on('updatePipeline', (message: Message) => {
-    triggerToast('success', 'Pipeline '+message.action, message.message);
+    triggerToast('Pipeline', message);
 });
 socket.on('deletePipeline', (message: Message) => {
-    triggerToast('success', 'Pipeline '+message.action, message.message);
+    triggerToast('Pipeline', message);
 });
 
 socket.on('updateSettings', (message: Message) => {
-    triggerToast('success', 'Kubero System', message.message ?? '');
+    triggerToast('Kubero System', message);
 });
 
-function triggerToast(icon: SweetAlertIcon, title: string, text: string) {
-  Swal.fire({
-      toast: true,
-      position: 'top-end',
-      showConfirmButton: false,
-      timer: 3000,
-      timerProgressBar: true,
-      icon: icon,
-      title: title,
-      html: text,
-      showCancelButton: false,
-      background: "rgb(var(--v-theme-cardBackground))",
-      /*background: "rgb(var(--v-theme-on-surface-variant))",*/
-      color: "rgba(var(--v-theme-on-background),var(--v-high-emphasis-opacity));",
-    })
+function triggerToast(resource: string, message: Message) {
+  if (message.user && message.user === authStore.username) return;
+  notificationStore.success(`${resource} ${message.action}`, message.message ?? '');
 }
 </script>

@@ -188,6 +188,7 @@ import { useDisplay } from 'vuetify'
 import Breadcrumbs from '../breadcrumbs.vue'
 import { useAuthStore } from '../../stores/auth'
 import { useKuberoStore } from '../../stores/kubero'
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
 
 type PipelinePhase = { name: string; enabled: boolean }
 type Pipeline = {
@@ -316,10 +317,11 @@ async function deletePipeline(pipeline: string) {
   deletingName.value = pipeline
   deleteError.value = false
   try {
-    await axios.delete(`/api/pipelines/${encodeURIComponent(pipeline)}`)
+    await axios.delete(`/api/pipelines/${encodeURIComponent(pipeline)}`, handledApiErrorConfig)
     pipelines.value = pipelines.value.filter((item) => item.name !== pipeline)
-  } catch {
+  } catch (error) {
     deleteError.value = true
+    notifyApiError(error, 'deletePipeline')
   } finally {
     deletingName.value = ''
   }

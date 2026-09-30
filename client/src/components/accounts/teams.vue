@@ -151,6 +151,7 @@ import axios from 'axios'
 import { useDisplay } from 'vuetify'
 import { useAuthStore } from '../../stores/auth'
 import { useI18n } from 'vue-i18n'
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
 
 export default defineComponent({
   name: 'TeamsTable',
@@ -209,15 +210,7 @@ export default defineComponent({
       wrapper.setAttribute('aria-label', t('accounts.table.tableRegion', { section: t('accounts.teams') }))
     }
 
-    // El server explica por qué rechaza una acción (último administrador, equipo
-    // protegido, id que ya no existe...). Antes solo iba a la consola y la
-    // pantalla parecía no hacer nada.
     const actionError = ref('')
-    const errorText = (e: any): string => {
-      const message = e?.response?.data?.message
-      if (Array.isArray(message)) return message.join(', ')
-      return message || e?.message || 'Error'
-    }
 
     const loadTeams = async () => {
       loading.value = true
@@ -241,22 +234,20 @@ export default defineComponent({
 
     const saveEdit = async () => {
       try {
-        await axios.put(`/api/groups/${editedTeam.value.id}`, editedTeam.value)
+        await axios.put(`/api/groups/${editedTeam.value.id}`, editedTeam.value, handledApiErrorConfig)
         await loadTeams()
         editDialog.value = false
       } catch (e) {
-        console.error('Error saving group:', e)
-        actionError.value = errorText(e)
+        actionError.value = notifyApiError(e, 'saveTeam')?.message ?? ''
       }
     }
 
     const deleteTeam = async (group: Team) => {
       try {
-        await axios.delete(`/api/groups/${group.id}`)
+        await axios.delete(`/api/groups/${group.id}`, handledApiErrorConfig)
         await loadTeams()
       } catch (e) {
-        console.error('Error deleting group:', e)
-        actionError.value = errorText(e)
+        actionError.value = notifyApiError(e, 'deleteTeam')?.message ?? ''
       }
     }
 
@@ -268,12 +259,11 @@ export default defineComponent({
 
     const saveCreate = async () => {
       try {
-        await axios.post('/api/groups', newTeam.value)
+        await axios.post('/api/groups', newTeam.value, handledApiErrorConfig)
         await loadTeams()
         createDialog.value = false
       } catch (e) {
-        console.error('Error creating group:', e)
-        actionError.value = errorText(e)
+        actionError.value = notifyApiError(e, 'createTeam')?.message ?? ''
       }
     }
 
