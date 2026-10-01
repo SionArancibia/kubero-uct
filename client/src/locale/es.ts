@@ -273,6 +273,7 @@ const messages = {
     list: {
       title: 'Aplicaciones de {pipeline}',
       description: 'Compara despliegues, consumo de recursos y servicios asociados en cada fase del pipeline.',
+      loading: 'Cargando aplicaciones',
       tableRegionLabel: 'Aplicaciones de la fase {phase}',
       emptyPhase: 'No hay aplicaciones desplegadas en esta fase.',
       availablePullRequests: 'Pull requests disponibles',

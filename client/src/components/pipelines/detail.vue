@@ -18,6 +18,40 @@
     </header>
 
     <div class="phase-list">
+      <section
+        v-if="loading"
+        class="app-panel"
+        aria-busy="true"
+        :aria-label="$t('app.list.loading')"
+      >
+        <header class="phase-header" aria-hidden="true">
+          <span class="phase-title-skeleton" />
+          <span class="phase-action-skeleton" />
+        </header>
+
+        <div class="app-table-wrap">
+          <v-table class="app-table">
+            <thead>
+              <tr>
+                <th>{{ $t('app.list.columns.application') }}</th>
+                <th>{{ $t('app.list.columns.deployment') }}</th>
+                <th>{{ $t('app.list.columns.resources') }}</th>
+                <th>{{ $t('app.list.columns.addons') }}</th>
+                <th class="actions-heading"><span class="sr-only">{{ $t('app.actions.name') }}</span></th>
+              </tr>
+            </thead>
+            <tbody aria-hidden="true">
+              <tr v-for="row in 6" :key="`app-skeleton-${row}`" class="app-skeleton-row">
+                <td v-for="column in 5" :key="column">
+                  <span class="cell-skeleton" />
+                </td>
+              </tr>
+            </tbody>
+          </v-table>
+        </div>
+      </section>
+
+      <template v-else>
       <section v-for="phase in activePhases" :key="phase.name" class="app-panel">
         <header class="phase-header">
           <div class="phase-identity">
@@ -87,6 +121,7 @@
           </div>
         </div>
       </section>
+      </template>
     </div>
   </v-container>
 </template>
@@ -135,10 +170,12 @@ const reviewapps = ref(false);
 const git = reactive({} as Git);
 const pullrequests = ref([] as Array<Pullrequest>);
 const pipelineName = ref("");
+const loading = ref(true);
 
 
 async function loadPipeline() {
-    axios.get('/api/pipelines/' + pipelineName.value + '/apps')
+    loading.value = true;
+    return axios.get('/api/pipelines/' + pipelineName.value + '/apps')
     .then(response => {
         //console.log("loadPipeline Phases", response.data.phases);
         phases.value = response.data.phases;
@@ -152,6 +189,9 @@ async function loadPipeline() {
     })
     .catch(error => {
         console.log(error);
+    })
+    .finally(() => {
+        loading.value = false;
     });
 }
 
@@ -214,6 +254,7 @@ export default defineComponent({
             git,
             pullrequests,
             authStore,
+            loading,
         }
     },
     mounted() {
@@ -226,6 +267,7 @@ export default defineComponent({
         // empty the phases array
         phases.value = [] as Array<Phase>;
         pullrequests.value = [] as Array<Pullrequest>;
+        loading.value = true;
     },
     props: {
       pipeline: {
@@ -354,6 +396,60 @@ export default defineComponent({
 
 .actions-heading {
   width: 180px;
+}
+
+.phase-title-skeleton {
+  width: 180px;
+  height: 14px;
+}
+
+.phase-action-skeleton {
+  width: 112px;
+  height: 36px;
+}
+
+.phase-title-skeleton,
+.phase-action-skeleton,
+.cell-skeleton {
+  display: block;
+  border-radius: 4px;
+  background: rgba(var(--v-theme-on-cardBackground), .12);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+.cell-skeleton {
+  width: 100%;
+  height: 12px;
+}
+
+.app-skeleton-row {
+  height: 64px;
+}
+
+.app-skeleton-row .cell-skeleton {
+  max-width: 180px;
+}
+
+.app-skeleton-row td:nth-child(2) .cell-skeleton,
+.app-skeleton-row td:nth-child(4) .cell-skeleton {
+  max-width: 92px;
+}
+
+.app-skeleton-row td:last-child .cell-skeleton {
+  max-width: 140px;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: .5; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phase-title-skeleton,
+  .phase-action-skeleton,
+  .cell-skeleton {
+    animation: none;
+  }
 }
 
 .phase-empty-state {
