@@ -383,6 +383,7 @@ import { defineComponent, ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useI18n } from 'vue-i18n'
 import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 
 export default defineComponent({
   name: 'NotificationsList',
@@ -508,13 +509,19 @@ export default defineComponent({
     }
 
     const deleteNotification = async (notification: Notification) => {
-      if (confirm(`Are you sure you want to delete the notification "${notification.name}"?`)) {
-        try {
-          await axios.delete(`/api/notifications/${notification.id}`, handledApiErrorConfig)
-          await loadNotifications()
-        } catch (e) {
-          notifyApiError(e, 'deleteNotification')
-        }
+      const confirmed = await confirmDestructiveAction({
+        title: t('feedback.confirmDelete.title', { name: notification.name }),
+        text: t('feedback.confirmDelete.message'),
+        confirmButtonText: t('global.delete'),
+        cancelButtonText: t('global.cancel'),
+      })
+      if (!confirmed) return
+
+      try {
+        await axios.delete(`/api/notifications/${notification.id}`, handledApiErrorConfig)
+        await loadNotifications()
+      } catch (e) {
+        notifyApiError(e, 'deleteNotification')
       }
     }
 

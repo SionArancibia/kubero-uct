@@ -108,9 +108,18 @@ const messages = {
         copy: "Copy",
         edit: "Edit",
         delete: "Delete",
+        remove: "Remove",
       },
       feedback: {
         regionLabel: 'Application notifications',
+        confirmDelete: {
+          title: 'Delete “{name}”?',
+          message: 'This action cannot be undone. The selected resource will be permanently deleted.',
+        },
+        confirmRemove: {
+          title: 'Remove “{name}”?',
+          message: 'This change takes effect immediately and cannot be undone automatically.',
+        },
         completed: {
           title: 'Operation completed',
           message: 'The request completed successfully.',
@@ -278,6 +287,8 @@ const messages = {
           emptyPhase: 'No applications are deployed in this phase.',
           availablePullRequests: 'Available pull requests',
           metricsUnavailable: 'Metrics unavailable',
+          deleteTitle: 'Delete application “{name}”?',
+          deleteDescription: 'This action cannot be undone. The application and all associated data in this phase will be permanently deleted.',
           columns: {
             application: 'Application',
             deployment: 'Deployment',

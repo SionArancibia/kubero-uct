@@ -177,7 +177,6 @@
 
 <script lang="ts" setup>
 import axios from 'axios'
-import Swal from 'sweetalert2'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useDisplay } from 'vuetify'
@@ -185,6 +184,7 @@ import Breadcrumbs from '../breadcrumbs.vue'
 import { useAuthStore } from '../../stores/auth'
 import { useKuberoStore } from '../../stores/kubero'
 import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 
 type PipelinePhase = { name: string; enabled: boolean }
 type Pipeline = {
@@ -296,18 +296,13 @@ async function loadPipelinesList() {
 }
 
 async function deletePipeline(pipeline: string) {
-  const result = await Swal.fire({
+  const confirmed = await confirmDestructiveAction({
     title: t('pipeline.list.deleteTitle', { name: pipeline }),
     text: t('pipeline.list.deleteDescription'),
-    icon: 'question',
-    showCancelButton: true,
     confirmButtonText: t('global.delete'),
     cancelButtonText: t('global.cancel'),
-    confirmButtonColor: 'rgb(var(--v-theme-primary))',
-    background: 'rgb(var(--v-theme-cardBackground))',
-    color: 'rgb(var(--v-theme-on-cardBackground))',
   })
-  if (!result.isConfirmed) return
+  if (!confirmed) return
 
   deletingName.value = pipeline
   try {

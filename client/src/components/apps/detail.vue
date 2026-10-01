@@ -125,10 +125,10 @@ import Events from "./events.vue";
 import LogsTab from "./logstab.vue";
 import Metrics from "./metrics.vue";
 import Builds from "./builds.vue";
-import Swal from 'sweetalert2';
 import { useKuberoStore } from '../../stores/kubero'
 import { mapState } from 'pinia'
 import { useAuthStore } from '../../stores/auth'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 const authStore = useAuthStore();
 
 
@@ -220,21 +220,14 @@ export default defineComponent({
                 link.click();
             });
         },
-        deleteApp() {
-            Swal.fire({
-                title: "Delete App ”" + this.app + "” ?",
-                text: "Do you want to delete this App? This action cannot be undone. It will delete all the data associated with this app.",
-                icon: "question",
-                showCancelButton: true,
+        async deleteApp() {
+            const confirmed = await confirmDestructiveAction({
+                title: this.$t('app.list.deleteTitle', { name: this.app }),
+                text: this.$t('app.list.deleteDescription'),
                 confirmButtonText: this.$t('global.delete'),
                 cancelButtonText: this.$t('global.cancel'),
-                confirmButtonColor: "rgb(var(--v-theme-primary))",
-                background: "rgb(var(--v-theme-cardBackground))",
-                /*background: "rgb(var(--v-theme-on-surface-variant))",*/
-                color: "rgba(var(--v-theme-on-background),var(--v-high-emphasis-opacity));",
-            })
-            .then((result) => {
-                if (result.isConfirmed) {
+            });
+            if (confirmed) {
                     axios.delete(`/api/apps/${this.pipeline}/${this.phase}/${this.app}`)
                     .then(response => {
                         // sleep 1 second
@@ -247,8 +240,7 @@ export default defineComponent({
                         console.log(error);
                     });
                 return;
-                }
-            });
+            }
         },
         async restartApp() {
             axios.get(`/api/apps/${this.pipeline}/${this.phase}/${this.app}/restart`)

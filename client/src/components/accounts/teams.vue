@@ -126,6 +126,7 @@ import { useDisplay } from 'vuetify'
 import { useAuthStore } from '../../stores/auth'
 import { useI18n } from 'vue-i18n'
 import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 
 export default defineComponent({
   name: 'TeamsTable',
@@ -214,6 +215,14 @@ export default defineComponent({
     }
 
     const deleteTeam = async (group: Team) => {
+      const confirmed = await confirmDestructiveAction({
+        title: t('feedback.confirmDelete.title', { name: group.name }),
+        text: t('feedback.confirmDelete.message'),
+        confirmButtonText: t('global.delete'),
+        cancelButtonText: t('global.cancel'),
+      })
+      if (!confirmed) return
+
       try {
         await axios.delete(`/api/groups/${group.id}`, handledApiErrorConfig)
         await loadTeams()

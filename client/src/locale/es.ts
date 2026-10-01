@@ -108,9 +108,18 @@ const messages = {
     copy: 'Copiar',
     edit: 'Editar',
     delete: 'Eliminar',
+    remove: 'Quitar',
   },
   feedback: {
     regionLabel: 'Notificaciones de la aplicación',
+    confirmDelete: {
+      title: '¿Eliminar “{name}”?',
+      message: 'Esta acción no se puede deshacer. El recurso seleccionado se eliminará permanentemente.',
+    },
+    confirmRemove: {
+      title: '¿Quitar “{name}”?',
+      message: 'Este cambio se aplicará inmediatamente y no se puede deshacer automáticamente.',
+    },
     completed: {
       title: 'Operación completada',
       message: 'La solicitud se completó correctamente.',
@@ -278,6 +287,8 @@ const messages = {
       emptyPhase: 'No hay aplicaciones desplegadas en esta fase.',
       availablePullRequests: 'Pull requests disponibles',
       metricsUnavailable: 'Métricas no disponibles',
+      deleteTitle: '¿Eliminar la aplicación “{name}”?',
+      deleteDescription: 'Esta acción no se puede deshacer. La aplicación y todos los datos asociados en esta fase se eliminarán permanentemente.',
       columns: {
         application: 'Aplicación',
         deployment: 'Despliegue',

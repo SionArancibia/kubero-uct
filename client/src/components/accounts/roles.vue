@@ -361,6 +361,7 @@ import { useDisplay } from 'vuetify'
 import { useAuthStore } from '../../stores/auth'
 import { useI18n } from 'vue-i18n'
 import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 
 export default defineComponent({
   name: 'RolesTable',
@@ -479,6 +480,14 @@ export default defineComponent({
     }
 
     const deleteRole = async (role: Role) => {
+      const confirmed = await confirmDestructiveAction({
+        title: t('feedback.confirmDelete.title', { name: role.name }),
+        text: t('feedback.confirmDelete.message'),
+        confirmButtonText: t('global.delete'),
+        cancelButtonText: t('global.cancel'),
+      })
+      if (!confirmed) return
+
       try {
         await axios.delete(`/api/roles/${role.id}`, handledApiErrorConfig)
         await loadRoles()

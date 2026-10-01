@@ -175,8 +175,8 @@
 <script lang="ts">
 import axios from "axios";
 import {  defineComponent } from 'vue'
-import Swal from 'sweetalert2';
 import { useAuthStore } from '../../stores/auth'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 const authStore = useAuthStore();
 
 type Metric = {
@@ -257,22 +257,14 @@ export default defineComponent({
         clearInterval(this.metricsInterval);
     },
     methods: {
-        deleteApp() {
-
-          Swal.fire({
-                title: "Delete App ”" + this.app.name + "” ?",
-                text: "Do you want to delete this App? This action cannot be undone. It will delete all the data associated with this app.",
-                icon: "question",
-                showCancelButton: true,
+        async deleteApp() {
+          const confirmed = await confirmDestructiveAction({
+                title: this.$t('app.list.deleteTitle', { name: this.app.name }),
+                text: this.$t('app.list.deleteDescription'),
                 confirmButtonText: this.$t('global.delete'),
                 cancelButtonText: this.$t('global.cancel'),
-                confirmButtonColor: "rgb(var(--v-theme-primary))",
-                background: "rgb(var(--v-theme-cardBackground))",
-                /*background: "rgb(var(--v-theme-on-surface-variant))",*/
-                color: "rgba(var(--v-theme-on-background),var(--v-high-emphasis-opacity));",
-            })
-            .then((result) => {
-                if (result.isConfirmed) {
+            });
+            if (confirmed) {
                   axios.delete(`/api/apps/${this.pipeline}/${this.phase}/${this.app.name}`)
                     .then(() => {
                       //this.$router.push(`/pipeline/${this.pipeline}/apps`);
@@ -284,8 +276,7 @@ export default defineComponent({
                       console.log(error);
                     });
                 return;
-                }
-            });
+            }
         },
         async restartApp() {
             axios.get(`/api/apps/${this.pipeline}/${this.phase}/${this.app.name}/restart`)

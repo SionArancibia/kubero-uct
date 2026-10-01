@@ -134,6 +134,7 @@ import { defineComponent } from 'vue'
 import Buildsform from './buildsform.vue'
 import Logs from './logs.vue'
 import { useKuberoStore } from '../../stores/kubero'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 
 const socket = useKuberoStore().kubero.socket as any;
 
@@ -229,9 +230,17 @@ export default defineComponent({
         clearInterval(this.clockTimer);
     },
     methods: {
-        deleteBuild(deploymentName: string) {
+        async deleteBuild(deploymentName: string) {
+            const confirmed = await confirmDestructiveAction({
+                title: this.$t('feedback.confirmDelete.title', { name: deploymentName }),
+                text: this.$t('feedback.confirmDelete.message'),
+                confirmButtonText: this.$t('global.delete'),
+                cancelButtonText: this.$t('global.cancel'),
+            });
+            if (!confirmed) return;
+
             try {
-                axios.delete(`/api/deployments/${this.pipeline}/${this.phase}/${this.app}/${deploymentName}`);
+                await axios.delete(`/api/deployments/${this.pipeline}/${this.phase}/${this.app}/${deploymentName}`);
                 this.builds = this.builds.filter((d) => d.name !== deploymentName);
             } catch (error) {
                 console.error(error);
