@@ -187,6 +187,7 @@ import { defineComponent, ref, onMounted } from 'vue'
 import axios from 'axios'
 import { useI18n } from 'vue-i18n'
 import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 
 
 export default defineComponent({
@@ -247,6 +248,14 @@ export default defineComponent({
       }
     }
     const deletePodsize = async (podsize: any) => {
+      const confirmed = await confirmDestructiveAction({
+        title: t('feedback.confirmDelete.title', { name: podsize.name }),
+        text: t('feedback.confirmDelete.message'),
+        confirmButtonText: t('global.delete'),
+        cancelButtonText: t('global.cancel'),
+      })
+      if (!confirmed) return
+
       try {
         await axios.delete(`/api/config/podsizes/${podsize.id}`, handledApiErrorConfig)
         await loadPodsizes()

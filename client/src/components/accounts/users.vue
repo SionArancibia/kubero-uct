@@ -247,6 +247,7 @@ import { useDisplay } from 'vuetify'
 import { useAuthStore } from '../../stores/auth'
 import { useI18n } from 'vue-i18n'
 import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 
 export default defineComponent({
   name: 'UserList',
@@ -443,6 +444,14 @@ export default defineComponent({
     }
 
     const deleteUser = async (user: User) => {
+      const confirmed = await confirmDestructiveAction({
+        title: t('feedback.confirmDelete.title', { name: user.username }),
+        text: t('feedback.confirmDelete.message'),
+        confirmButtonText: t('global.delete'),
+        cancelButtonText: t('global.cancel'),
+      })
+      if (!confirmed) return
+
       try {
         await axios.delete(`/api/users/id/${user.id}`, handledApiErrorConfig)
         await loadUsers()
@@ -513,6 +522,14 @@ export default defineComponent({
     }
 
     const deleteGroupFromUser = async (team: any, user: User) => {
+      const confirmed = await confirmDestructiveAction({
+        title: t('feedback.confirmRemove.title', { name: team.name }),
+        text: t('feedback.confirmRemove.message'),
+        confirmButtonText: t('global.remove'),
+        cancelButtonText: t('global.cancel'),
+      })
+      if (!confirmed) return
+
       try {
         await axios.delete(`/api/users/${user.id}/groups/${team.id}`, handledApiErrorConfig)
         await loadUsers()

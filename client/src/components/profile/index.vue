@@ -169,12 +169,13 @@ import { defineComponent, ref, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { useAuthStore } from '../../stores/auth'
 import { useI18n } from 'vue-i18n'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 const authStore = useAuthStore();
 
 export default defineComponent({
   name: 'ProfilePage',
   setup() {
-    const { locale } = useI18n()
+    const { locale, t } = useI18n()
 
     
     const availableLanguages = ref([
@@ -237,6 +238,14 @@ export default defineComponent({
     }
 
     const deleteToken = async (token: any) => {
+      const confirmed = await confirmDestructiveAction({
+        title: t('feedback.confirmDelete.title', { name: token.name }),
+        text: t('feedback.confirmDelete.message'),
+        confirmButtonText: t('global.delete'),
+        cancelButtonText: t('global.cancel'),
+      })
+      if (!confirmed) return
+
       try {
         await axios.delete(`/api/tokens/my/${token.id}`)
         await loadTokens()

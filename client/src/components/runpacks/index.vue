@@ -265,6 +265,7 @@ import { defineComponent, ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import axios from 'axios'
 import RunpacksItem from './runpacks-item.vue'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 
 export default defineComponent({
   name: 'RunpackList',
@@ -411,7 +412,14 @@ export default defineComponent({
     }
 
     const deleteRunpack = async (runpack: any) => {
-      console.log('Deleting runpack:', runpack)
+      const confirmed = await confirmDestructiveAction({
+        title: t('feedback.confirmDelete.title', { name: runpack.name }),
+        text: t('feedback.confirmDelete.message'),
+        confirmButtonText: t('global.delete'),
+        cancelButtonText: t('global.cancel'),
+      })
+      if (!confirmed) return
+
       try {
         await axios.delete(`/api/config/runpacks/${runpack.id}`)
         await loadRunpacks()
