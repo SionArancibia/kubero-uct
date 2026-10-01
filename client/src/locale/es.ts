@@ -270,6 +270,21 @@ const messages = {
     buttons: {
       new: 'Nueva App',
     },
+    list: {
+      title: 'Aplicaciones de {pipeline}',
+      description: 'Compara despliegues, consumo de recursos y servicios asociados en cada fase del pipeline.',
+      loading: 'Cargando aplicaciones',
+      tableRegionLabel: 'Aplicaciones de la fase {phase}',
+      emptyPhase: 'No hay aplicaciones desplegadas en esta fase.',
+      availablePullRequests: 'Pull requests disponibles',
+      metricsUnavailable: 'Métricas no disponibles',
+      columns: {
+        application: 'Aplicación',
+        deployment: 'Despliegue',
+        resources: 'Recursos',
+        addons: 'Complementos',
+      },
+    },
     nav: {
       overview: 'Resumen',
       builds: 'Compilaciones',

@@ -270,6 +270,21 @@ const messages = {
         buttons: {
           new: 'New App',
         },
+        list: {
+          title: 'Applications in {pipeline}',
+          description: 'Compare deployments, resource usage, and associated services across each pipeline phase.',
+          loading: 'Loading applications',
+          tableRegionLabel: 'Applications in the {phase} phase',
+          emptyPhase: 'No applications are deployed in this phase.',
+          availablePullRequests: 'Available pull requests',
+          metricsUnavailable: 'Metrics unavailable',
+          columns: {
+            application: 'Application',
+            deployment: 'Deployment',
+            resources: 'Resources',
+            addons: 'Add-ons',
+          },
+        },
         nav: {
           overview: 'Overview',
           builds: 'Builds',
