@@ -1,15 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { IPlugin } from './plugins/plugin.interface';
 import { KuberoMysql } from './plugins/kuberoMysql';
-import { KuberoRedis } from './plugins/kuberoRedis';
 import { KuberoPostgresql } from './plugins/kuberoPostgresql';
-import { KuberoMongoDB } from './plugins/kuberoMongoDB';
-import { KuberoMemcached } from './plugins/kuberoMemcached';
-import { KuberoElasticsearch } from './plugins/kuberoElasticsearch';
 import { KuberoCouchDB } from './plugins/kuberoCouchDB';
-import { KuberoKafka } from './plugins/kuberoKafka';
 import { KuberoMail } from './plugins/kuberoMail';
-import { KuberoRabbitMQ } from './plugins/kuberoRabbitMQ';
 import { Tunnel } from './plugins/cloudflare';
 import { PostgresCluster } from './plugins/postgresCluster';
 import { RedisCluster } from './plugins/redisCluster';
@@ -102,26 +96,9 @@ export class AddonsService {
     const kuberoMysql = new KuberoMysql(this.CRDList);
     this.addonsList.push(kuberoMysql);
 
-    const kuberoRedis = new KuberoRedis(this.CRDList);
-    this.addonsList.push(kuberoRedis);
-
-    const kuberoKafka = new KuberoKafka(this.CRDList);
-    this.addonsList.push(kuberoKafka);
-
-    const kuberoMemcached = new KuberoMemcached(this.CRDList);
-    this.addonsList.push(kuberoMemcached);
-
-    const kuberoElasticsearch = new KuberoElasticsearch(this.CRDList);
-    this.addonsList.push(kuberoElasticsearch);
-
-    const kuberoMongoDB = new KuberoMongoDB(this.CRDList);
-    this.addonsList.push(kuberoMongoDB);
-
     const kuberoPostgresql = new KuberoPostgresql(this.CRDList);
     this.addonsList.push(kuberoPostgresql);
 
-    const kuberoRabbitMQ = new KuberoRabbitMQ(this.CRDList);
-    this.addonsList.push(kuberoRabbitMQ);
   }
 
   public async getAddonsList(): Promise<IPlugin[]> {

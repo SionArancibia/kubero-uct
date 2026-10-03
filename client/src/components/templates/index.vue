@@ -268,6 +268,8 @@ const ENABLED_TEMPLATES = [
     'chartdb',
 ];
 
+const HIDDEN_CATALOGS = ['Kubero Frameworks'];
+
 export default defineComponent({
     sockets: {
     },
@@ -341,6 +343,9 @@ export default defineComponent({
             axios.get(`/api/config/templates`)
             .then(response => {
                 self.templates = response.data as Templates;
+                self.templates.catalogs = self.templates.catalogs.filter((catalog) => {
+                    return !HIDDEN_CATALOGS.includes(catalog.name);
+                });
                 if (self.templates.catalogs.length > 0 && self.templates.enabled == true) {
                     self.loadTemplates(self.templates.catalogs[catalogId].index.url)
                 }

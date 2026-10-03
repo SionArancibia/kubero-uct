@@ -8,12 +8,13 @@
         </v-row>
         <v-row>
             <v-col cols="12" sm="12" md="4"
-            v-for="addon in addons" :key="addon.kind">
+            v-for="addon in addons" :key="addon.kind"
+            class="d-flex flex-column">
                 <v-card
                     :disabled="!addon.enabled"
                     style="padding-bottom: 40px;"
                     color="cardBackground"
-                    class="uct-card">
+                    class="uct-card flex-grow-1 d-flex flex-column">
                     <v-list-item class="justify-center">
                         <div  class="d-flex justify-center" style="margin-top: 20px;">
                             <v-avatar
@@ -45,7 +46,7 @@
                             <span v-if="!addon.enabled">{{ addon.version.latest }}</span>
                         </v-card-subtitle>
                         -->
-                        <v-card-text>
+                        <v-card-text style="min-height: 120px;">
                             {{ addon.description }}
                             <!--Operator: <a :href="addon.url">{{ addon.id }}</a>-->
                         </v-card-text>
