@@ -19,7 +19,6 @@ import { KuberoAddonRedis } from './plugins/kuberoaddonsRedis';
 import { KuberoAddonRabbitmq } from './plugins/kuberoaddonsRabbitmq';
 import { KuberoAddonMongodb } from './plugins/kuberoaddonsMongodb';
 import { KuberoAddonMemcached } from './plugins/kuberoaddonsMemcached';
-import { Cluster as CloudnativePG } from './plugins/cloudnativePG';
 import { Elasticsearch } from './plugins/elasticsearch';
 
 @Injectable()
@@ -65,9 +64,6 @@ export class AddonsService {
 
     const tunnel = new Tunnel(this.CRDList);
     this.addonsList.push(tunnel);
-
-    const cloudnativePG = new CloudnativePG(this.CRDList);
-    this.addonsList.push(cloudnativePG);
 
     const postgresCluster = new PostgresCluster(this.CRDList);
     this.addonsList.push(postgresCluster);
