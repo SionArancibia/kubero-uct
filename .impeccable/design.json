@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-27T03:59:54.979Z",
+  "title": "Design System: Kubero UCT",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Azul Operativo UCT",
+        "canonical": "#0075B4",
+        "tonalRamp": ["#001A29", "#003A59", "#005888", "#0075B4", "#0090DC", "#44B3EA", "#9ADAF5", "#E5F7FD"]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Azul Operativo Profundo",
+        "canonical": "#005888",
+        "tonalRamp": ["#00141F", "#002D45", "#00466C", "#005888", "#1778A8", "#58A2C8", "#A3CDE0", "#E8F4F9"]
+      },
+      "primary-dark-theme": {
+        "role": "primary",
+        "displayName": "Azul de Señal UCT",
+        "canonical": "#0090DC",
+        "tonalRamp": ["#001A29", "#003D5C", "#006394", "#0090DC", "#2AA9E8", "#6FC8F0", "#B5E5F8", "#ECF9FE"]
+      },
+      "accent": {
+        "role": "secondary",
+        "displayName": "Amarillo de Atención Institucional",
+        "canonical": "#EDC500",
+        "tonalRamp": ["#241E00", "#514300", "#7A6400", "#A98A00", "#EDC500", "#F7D94D", "#FCEB99", "#FFF9DC"]
+      },
+      "accent-text": {
+        "role": "secondary",
+        "displayName": "Ocre de Lectura",
+        "canonical": "#7A6400",
+        "tonalRamp": ["#1D1800", "#3A3000", "#5A4A00", "#7A6400", "#A48800", "#CEB74B", "#EBDD91", "#FBF6DB"]
+      },
+      "success": {
+        "role": "tertiary",
+        "displayName": "Verde de Operación",
+        "canonical": "#10B981",
+        "tonalRamp": ["#06251B", "#084B34", "#087451", "#059669", "#10B981", "#52D2A5", "#A0E8CF", "#E8FAF3"]
+      },
+      "success-text": {
+        "role": "tertiary",
+        "displayName": "Verde de Estado",
+        "canonical": "#059669",
+        "tonalRamp": ["#05251B", "#064532", "#076A4B", "#059669", "#22B887", "#63D2AD", "#ACE9D4", "#ECFAF5"]
+      },
+      "error": {
+        "role": "tertiary",
+        "displayName": "Rojo de Incidencia",
+        "canonical": "#EF4444",
+        "tonalRamp": ["#2B0909", "#571111", "#841D1D", "#B52B2B", "#EF4444", "#F77A7A", "#FBB4B4", "#FDECEC"]
+      },
+      "error-text": {
+        "role": "tertiary",
+        "displayName": "Rojo de Acción Crítica",
+        "canonical": "#DC2626",
+        "tonalRamp": ["#290707", "#510D0D", "#7A1515", "#A51D1D", "#DC2626", "#EC6868", "#F6AEAE", "#FDEAEA"]
+      },
+      "metadata": {
+        "role": "neutral",
+        "displayName": "Gris de Metadatos",
+        "canonical": "#878787",
+        "tonalRamp": ["#262626", "#404040", "#5A5A5A", "#707070", "#878787", "#A7A7A7", "#CECECE", "#F2F2F2"]
+      },
+      "background-light": {
+        "role": "neutral",
+        "displayName": "Papel de Operaciones",
+        "canonical": "#F4F6F9",
+        "tonalRamp": ["#1B1E22", "#343941", "#545B66", "#78818D", "#A2ABB6", "#C9D0D8", "#E6EAF0", "#F4F6F9"]
+      },
+      "navigation-light": {
+        "role": "neutral",
+        "displayName": "Navegación Clara",
+        "canonical": "#F7F9FC",
+        "tonalRamp": ["#1A1D21", "#343940", "#555C66", "#7C858F", "#A7AFB9", "#CDD3DA", "#E9EDF2", "#F7F9FC"]
+      },
+      "secondary-light": {
+        "role": "neutral",
+        "displayName": "Azul Niebla",
+        "canonical": "#EAEFF5",
+        "tonalRamp": ["#18202A", "#303D4C", "#4C5C6E", "#708095", "#9BAABC", "#C3CEDA", "#DDE5ED", "#F3F6F9"]
+      },
+      "surface-light": {
+        "role": "neutral",
+        "displayName": "Superficie Blanca",
+        "canonical": "#FFFFFF",
+        "tonalRamp": ["#262626", "#454545", "#666666", "#898989", "#AEAEAE", "#D1D1D1", "#ECECEC", "#FFFFFF"]
+      },
+      "text-light-theme": {
+        "role": "neutral",
+        "displayName": "Grafito de Lectura",
+        "canonical": "#1A1A1A",
+        "tonalRamp": ["#1A1A1A", "#363636", "#555555", "#777777", "#9A9A9A", "#BEBEBE", "#DEDEDE", "#F6F6F6"]
+      },
+      "background-dark": {
+        "role": "neutral",
+        "displayName": "Fondo Técnico Oscuro",
+        "canonical": "#0E1620",
+        "tonalRamp": ["#080C12", "#0E1620", "#1B2A39", "#334556", "#586A7A", "#8796A3", "#BBC4CC", "#EEF1F4"]
+      },
+      "navigation-dark": {
+        "role": "neutral",
+        "displayName": "Pizarra Operativa",
+        "canonical": "#0B1119",
+        "tonalRamp": ["#070A0E", "#0B1119", "#18232F", "#2F4050", "#536574", "#82919D", "#B8C1C8", "#EDF0F3"]
+      },
+      "surface-dark": {
+        "role": "neutral",
+        "displayName": "Panel Nocturno",
+        "canonical": "#16202D",
+        "tonalRamp": ["#0C1118", "#16202D", "#29394A", "#435669", "#687B8C", "#96A5B2", "#C3CBD2", "#F0F2F4"]
+      },
+      "secondary-dark": {
+        "role": "neutral",
+        "displayName": "Capa Nocturna",
+        "canonical": "#1B2430",
+        "tonalRamp": ["#0D1218", "#1B2430", "#303D4C", "#4C5C6D", "#718192", "#9CA9B5", "#C7CED4", "#F1F3F5"]
+      },
+      "focus-dark": {
+        "role": "neutral",
+        "displayName": "Foco Nocturno",
+        "canonical": "#2A374A",
+        "tonalRamp": ["#10161F", "#202B3A", "#2A374A", "#485B73", "#6D829A", "#9BAAB9", "#C7CFD7", "#F1F3F5"]
+      },
+      "text-dark-theme": {
+        "role": "neutral",
+        "displayName": "Texto de Consola",
+        "canonical": "#E2E8F0",
+        "tonalRamp": ["#17202A", "#303C48", "#4E5C69", "#73818E", "#9EABB7", "#C4CDD6", "#DDE3E9", "#F5F7F9"]
+      },
+      "subtle-border": {
+        "role": "neutral",
+        "displayName": "Borde Institucional Sutil",
+        "canonical": "rgba(135, 135, 135, 0.2)",
+        "tonalRamp": ["#262626", "#404040", "#5A5A5A", "#707070", "#878787", "#A7A7A7", "#CECECE", "#F2F2F2"]
+      }
+    },
+    "typographyMeta": {
+      "title": { "displayName": "Title", "purpose": "Encabezados principales de vistas y entidades." },
+      "section-title": { "displayName": "Section title", "purpose": "Fases y agrupaciones operativas en mayúsculas." },
+      "body": { "displayName": "Body", "purpose": "Contenido cotidiano, formularios y explicación." },
+      "value": { "displayName": "Value", "purpose": "Datos de configuración y nombres que requieren lectura prioritaria." },
+      "label": { "displayName": "Label", "purpose": "Metadatos y nombres de campo compactos." },
+      "code": { "displayName": "Code", "purpose": "Hashes, comandos, pods, métricas y logs." }
+    },
+    "shadows": [
+      { "name": "secondary-navigation", "value": "8px 0 24px rgba(14, 22, 32, 0.18)", "purpose": "Separar el panel secundario del área operativa." },
+      { "name": "surface-low", "value": "Vuetify elevation 1", "purpose": "Dar presencia mínima a tarjetas interactivas." },
+      { "name": "modal", "value": "Vuetify elevation 4", "purpose": "Concentrar la atención en autenticación y superficies temporales." }
+    ],
+    "motion": [
+      { "name": "secondary-navigation-enter", "value": "transform 180ms ease, opacity 180ms ease", "purpose": "Introducción breve del panel secundario; se elimina con prefers-reduced-motion." },
+      { "name": "state-color", "value": "background 200ms ease", "purpose": "Confirmar hover en acciones destacadas sin movimiento espacial." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "600px" },
+      { "name": "md", "value": "960px" },
+      { "name": "lg", "value": "1280px" },
+      { "name": "xl", "value": "1920px" },
+      { "name": "xxl", "value": "2560px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Acción principal compacta con identidad UCT.",
+      "html": "<button class=\"ds-btn-primary\">Guardar cambios</button>",
+      "css": ".ds-btn-primary { background:#0075B4; color:#FFFFFF; padding:8px 16px; border:0; border-radius:8px; font:600 0.875rem/1.4 Roboto,system-ui,sans-serif; letter-spacing:.02em; cursor:pointer; transition:background 200ms ease,transform 120ms ease; } .ds-btn-primary:hover { background:#005888; } .ds-btn-primary:active { transform:translateY(1px); } .ds-btn-primary:focus-visible { outline:3px solid #0090DC; outline-offset:2px; }"
+    },
+    {
+      "name": "Tonal Button",
+      "kind": "button",
+      "refersTo": "button-tonal",
+      "description": "Acción secundaria con peso visual contenido.",
+      "html": "<button class=\"ds-btn-tonal\">Nueva aplicación</button>",
+      "css": ".ds-btn-tonal { background:#EAEFF5; color:#0075B4; padding:8px 16px; border:0; border-radius:8px; font:500 0.875rem/1.4 Roboto,system-ui,sans-serif; cursor:pointer; transition:background 200ms ease; } .ds-btn-tonal:hover { background:#D8E5EF; } .ds-btn-tonal:focus-visible { outline:3px solid #0075B4; outline-offset:2px; }"
+    },
+    {
+      "name": "Outlined Input",
+      "kind": "input",
+      "refersTo": "input-outlined",
+      "description": "Campo de operación con label persistente y foco inequívoco.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Repositorio</span><input class=\"ds-field-input\" value=\"git@example.edu:equipo/app.git\"></label>",
+      "css": ".ds-field { display:grid; gap:4px; color:#1A1A1A; font-family:Roboto,system-ui,sans-serif; } .ds-field-label { color:#878787; font-size:.75rem; font-weight:500; letter-spacing:.025em; text-transform:uppercase; } .ds-field-input { min-height:48px; padding:12px 16px; color:#1A1A1A; background:#FFFFFF; border:1px solid rgba(135,135,135,.55); border-radius:4px; font:400 .875rem/1.4 Roboto,system-ui,sans-serif; } .ds-field-input:hover { border-color:#0075B4; } .ds-field-input:focus-visible { border-color:#0075B4; outline:3px solid rgba(0,117,180,.24); outline-offset:1px; }"
+    },
+    {
+      "name": "Navigation Item",
+      "kind": "nav",
+      "refersTo": "navigation-item",
+      "description": "Entrada compacta para el rail y la navegación secundaria.",
+      "html": "<a class=\"ds-nav-item\" href=\"#\"><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 4h16v6H4V4m0 10h16v6H4v-6m2-8v2h2V6H6m0 10v2h2v-2H6Z\"/></svg><span>Pipelines</span></a>",
+      "css": ".ds-nav-item { min-height:48px; display:flex; align-items:center; gap:12px; padding:0 12px; color:#1A1A1A; background:transparent; border-radius:8px; font:500 .875rem/1.3 Roboto,system-ui,sans-serif; text-decoration:none; transition:background 200ms ease,color 200ms ease; } .ds-nav-item svg { width:22px; height:22px; fill:currentColor; } .ds-nav-item:hover { background:rgba(0,117,180,.08); color:#0075B4; } .ds-nav-item:focus-visible { outline:3px solid #0075B4; outline-offset:2px; }"
+    },
+    {
+      "name": "Running Status Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Estado operativo legible por color y texto.",
+      "html": "<span class=\"ds-chip-running\"><span class=\"ds-chip-dot\" aria-hidden=\"true\"></span>Running</span>",
+      "css": ".ds-chip-running { display:inline-flex; align-items:center; gap:6px; padding:4px 8px; color:#059669; background:rgba(16,185,129,.12); border-radius:4px; font:600 .75rem/1.3 Roboto,system-ui,sans-serif; letter-spacing:.025em; } .ds-chip-dot { width:7px; height:7px; border-radius:9999px; background:#10B981; }"
+    },
+    {
+      "name": "Pipeline App Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Superficie compacta para identidad, origen, métricas y estado de una aplicación.",
+      "html": "<article class=\"ds-app-card\"><header><svg viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M6 3a3 3 0 1 0 0 6c.35 0 .69-.06 1-.17V15a3 3 0 1 0 2 0v-2h6a3 3 0 1 0 0-2H9V8.83A3 3 0 0 0 6 3Z\"/></svg><strong>portal-uct</strong></header><p>git@repositorio.uct.cl:equipo/portal.git</p><div><span class=\"ds-app-chip\">main</span><code>a18d7c2</code></div><footer><span>CPU 42%</span><span>RAM 61%</span></footer></article>",
+      "css": ".ds-app-card { width:320px; overflow:hidden; color:#1A1A1A; background:#FFFFFF; border:1px solid rgba(135,135,135,.2); border-radius:8px; box-shadow:0 1px 3px rgba(14,22,32,.12); font-family:Roboto,system-ui,sans-serif; } .ds-app-card header { display:flex; align-items:center; gap:8px; padding:12px 16px; } .ds-app-card header svg { width:20px; height:20px; fill:#0075B4; } .ds-app-card p { margin:0; padding:0 16px 8px; overflow:hidden; color:#878787; font-size:.75rem; text-overflow:ellipsis; white-space:nowrap; } .ds-app-card>div { display:flex; gap:8px; align-items:center; padding:4px 16px 12px; } .ds-app-chip { padding:4px 8px; color:#0075B4; background:rgba(0,117,180,.12); border-radius:4px; font-size:.75rem; font-weight:600; } .ds-app-card code { font:500 .8125rem/1.3 'Fira Code',Consolas,monospace; } .ds-app-card footer { display:flex; justify-content:space-between; padding:8px 16px; border-top:1px solid rgba(135,135,135,.2); font-size:.75rem; font-weight:500; }"
+    },
+    {
+      "name": "Terminal",
+      "kind": "custom",
+      "refersTo": "terminal",
+      "description": "Superficie técnica estable para logs y sesiones de consola.",
+      "html": "<pre class=\"ds-terminal\"><span>$</span> kubero deploy portal-uct\n<span>✓</span> deployment ready</pre>",
+      "css": ".ds-terminal { margin:0; padding:16px; color:#E2E8F0; background:#0B1119; border-radius:8px; font:500 .8125rem/1.6 'Fira Code',Consolas,monospace; white-space:pre-wrap; } .ds-terminal span:first-child { color:#0090DC; } .ds-terminal span:last-child { color:#10B981; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Centro de Operaciones de Infraestructura Institucional",
+    "overview": "Kubero UCT se comporta visualmente como una sala de control universitaria: compacta, rigurosa y orientada a datos. La identidad institucional aparece en las decisiones que ayudan a operar —jerarquía, navegación, estados y foco— sin convertir la interfaz en una pieza promocional. El sistema privilegia densidad eficiente, lectura rápida y superficies en capas contenidas.",
+    "keyCharacteristics": [
+      "Compacto y escaneable, con jerarquías cortas y consistentes.",
+      "Institucional sin ornamentación gratuita.",
+      "Equivalente en temas claro y oscuro.",
+      "Estados operativos legibles por color, texto, iconos y contexto.",
+      "Movimiento breve y funcional, con alternativa para movimiento reducido."
+    ],
+    "rules": [
+      { "name": "The Operational Color Rule", "body": "El azul identifica interacción y estructura; el amarillo, verde y rojo comunican estados. Ningún color de estado debe convertirse en decoración ambiental.", "section": "colors" },
+      { "name": "The Dual-Theme Rule", "body": "Toda asignación de color debe resolver explícitamente los temas claro y oscuro mediante roles semánticos de Vuetify, nunca mediante un valor pensado para un solo fondo.", "section": "colors" },
+      { "name": "The Data Voice Rule", "body": "Los identificadores técnicos usan la familia monoespaciada; la interfaz, navegación y explicación permanecen en la familia institucional.", "section": "typography" },
+      { "name": "The Short Hierarchy Rule", "body": "Una pantalla operativa no necesita más de título, sección, etiqueta, valor y cuerpo; las variaciones ad hoc debilitan el escaneo.", "section": "typography" },
+      { "name": "The Density Without Compression Rule", "body": "Reducir espacio es válido; reducir controles, contraste o texto por debajo de su escala establecida no lo es.", "section": "layout" },
+      { "name": "The Earned Elevation Rule", "body": "Una sombra solo aparece cuando una superficie está temporalmente encima, se mueve sobre otra o necesita capturar el foco.", "section": "elevation" },
+      { "name": "The Utility Curve Rule", "body": "Las esquinas suavizan la herramienta sin volverla lúdica; evita radios grandes en contenedores operativos.", "section": "shapes" }
+    ],
+    "dos": [
+      "**Do** usar roles semánticos de Vuetify para que cada componente responda correctamente a temas claro y oscuro.",
+      "**Do** mantener etiquetas compactas, unidades visibles y alineación estable para métricas y estados.",
+      "**Do** combinar color con texto, icono o forma en estados operativos.",
+      "**Do** respetar foco visible, navegación por teclado y movimiento reducido.",
+      "**Do** conservar el logotipo UCT con proporciones intactas y texto alternativo significativo."
+    ],
+    "donts": [
+      "**Don't** reintroducir el morado histórico de Kubero como acento de producto; la identidad activa es azul UCT.",
+      "**Don't** usar amarillo, verde o rojo como decoración sin semántica de estado.",
+      "**Don't** añadir sombras a cada tarjeta ni convertir la profundidad contenida en relieve ornamental.",
+      "**Don't** mezclar valores hexadecimales de un solo tema cuando existe un rol semántico equivalente.",
+      "**Don't** reducir texto o controles para encajar datos densos; usa scroll, agrupación y truncado accesible."
+    ]
+  }
+}

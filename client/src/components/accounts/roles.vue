@@ -1,37 +1,44 @@
 <template>
   <v-container>
+    <v-alert v-if="loadError" type="warning" variant="tonal" class="ma-4">
+      <div class="account-alert-content">
+        <span>{{ $t('accounts.errors.loadRoles') }}</span>
+        <v-btn variant="outlined" color="warning" size="small" @click="loadRoles">{{ $t('accounts.retry') }}</v-btn>
+      </div>
+    </v-alert>
     <v-data-table
+      v-if="!loadError"
+      ref="roleTable"
+      v-model:page="page"
       :headers="headers"
-      :items="roles"
+      :items="filteredRoles"
+      :items-per-page="itemsPerPage"
       :loading="loading"
-      class="elevation-0 border-0"
+      class="account-data-table account-data-table--wide"
       item-key="id"
-      :search="search"
+      hide-default-footer
     >
       <template #top>
-        <v-text-field
-          v-model="search"
-          :label="$t('roles.search')"
-          prepend-inner-icon="mdi-magnify"
-          single-line
-          hide-details
-          outlined
-          class="mx-0 mt-2"
-          clearable
-          density="compact"
-        ></v-text-field>
+        <div class="account-table-toolbar account-table-toolbar--search">
+          <v-text-field v-model="search" :label="$t('roles.search')" prepend-inner-icon="mdi-magnify" hide-details variant="outlined" clearable density="compact" />
+          <v-btn v-if="hasActiveFilters" variant="text" color="primary" prepend-icon="mdi-filter-remove-outline" @click="resetFilters">{{ $t('accounts.table.clearFilters') }}</v-btn>
+        </div>
+        <div class="account-table-summary" aria-live="polite">
+          <span>{{ resultSummary }}</span>
+          <v-chip v-if="hasActiveFilters" size="small" variant="tonal" color="primary" label>{{ $t('accounts.table.filtered') }}</v-chip>
+        </div>
+      </template>
+      <template v-slot:[`header.actions`]><span class="sr-only">{{ $t('accounts.table.actions') }}</span></template>
+      <template #loading><v-skeleton-loader type="table-row@6" /></template>
+      <template #no-data>
+        <div class="account-empty-state">
+          <v-icon :icon="hasActiveFilters ? 'mdi-filter-off-outline' : 'mdi-shield-account-outline'" size="38" color="primary" aria-hidden="true" />
+          <h2>{{ hasActiveFilters ? $t('accounts.table.noResults') : $t('accounts.table.noItems') }}</h2>
+          <v-btn v-if="hasActiveFilters" color="primary" variant="outlined" @click="resetFilters">{{ $t('accounts.table.clearFilters') }}</v-btn>
+        </div>
       </template>
       <template v-slot:[`item.name`]="{ item }">
-        <span>
-          <v-chip
-            class="ma-2"
-            color="primary"
-            label
-          >
-            <v-icon icon="mdi-account-circle-outline" start></v-icon>
-            {{ item.name}}
-          </v-chip>
-        </span>
+        <div class="account-identity"><v-icon icon="mdi-shield-account-outline" color="primary" size="20" aria-hidden="true" /><strong>{{ item.name }}</strong></div>
       </template>
       <template v-slot:[`item.permissions`]="{ item }">
         <span v-for="permission in item.permissions" :key="permission.id">
@@ -39,118 +46,112 @@
         </span>
       </template>
       <template v-slot:[`item.permissionsApp`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'app')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'app') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsPipeline`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'pipeline')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'pipeline') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsAccount`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'user')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'user') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsConfig`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'config')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'config') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsAudit`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'audit')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'audit') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsToken`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'token')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'token') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsConsole`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'console')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'console') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsLogs`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'logs')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'logs') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.permissionsReboot`]="{ item }">
-        <span>
+        <span role="img" :aria-label="getResourcePermissionLabel(item.permissions, 'reboot')">
           <v-icon
             color="primary"
+            aria-hidden="true"
           >
             {{getResourcePermissions(item.permissions, 'reboot') }}
           </v-icon>
         </span>
       </template>
       <template v-slot:[`item.actions`]="{ item }">
-        <v-btn
-          elevation="0"
-          variant="tonal"
-          size="small"
-          class="ma-2"
-          color="secondary"
-          @click="openEditRoleDialog(item)"
-          :disabled="item.name === 'admin' || !writeUserPermission"
-        >
-          <v-icon color="primary">
-            mdi-pencil
-          </v-icon>
-        </v-btn>
-        <v-btn
-          elevation="0"
-          variant="tonal"
-          size="small"
-          class="ma-2"
-          color="secondary"
-          @click="deleteRole(item)"
-          :disabled="item.name === 'admin' || item.name === 'guest' || item.name === 'member' || !writeUserPermission"
-        >
-          <v-icon color="primary">
-            mdi-delete
-          </v-icon>
-        </v-btn>
+        <div class="account-actions">
+          <v-tooltip :text="$t('global.edit')" location="top"><template #activator="{ props }"><v-btn v-bind="props" icon="mdi-pencil-outline" variant="text" size="small" :aria-label="`${$t('global.edit')} ${item.name}`" :disabled="item.name === 'admin' || !writeUserPermission" @click="openEditRoleDialog(item)" /></template></v-tooltip>
+          <v-tooltip :text="$t('global.delete')" location="top"><template #activator="{ props }"><v-btn v-bind="props" icon="mdi-delete-outline" variant="text" color="error" size="small" :aria-label="`${$t('global.delete')} ${item.name}`" :disabled="item.name === 'admin' || item.name === 'guest' || item.name === 'member' || !writeUserPermission" @click="deleteRole(item)" /></template></v-tooltip>
+        </div>
+      </template>
+      <template #bottom>
+        <footer v-if="!loading && filteredRoles.length > 0" class="account-table-footer">
+          <div class="account-page-size"><span>{{ $t('accounts.table.rowsPerPage') }}</span><v-select v-model="itemsPerPage" :items="pageSizeOptions" density="compact" variant="outlined" hide-details :aria-label="$t('accounts.table.rowsPerPage')" /></div>
+          <v-pagination v-model="page" :length="pageCount" :total-visible="paginationVisible" density="comfortable" :aria-label="$t('accounts.table.paginationLabel')" />
+          <span class="account-page-range">{{ pageRange }}</span>
+        </footer>
       </template>
     </v-data-table>
 
     <!-- Button to add a role -->
-    <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+    <div class="legacy-create-control">
       <v-btn
         fab
         color="primary"
@@ -354,18 +355,23 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue'
+import { computed, defineComponent, nextTick, ref, onMounted, watch } from 'vue'
 import axios from 'axios'
+import { useDisplay } from 'vuetify'
 import { useAuthStore } from '../../stores/auth'
 import { useI18n } from 'vue-i18n'
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 
 export default defineComponent({
   name: 'RolesTable',
   setup() {
-    const { t } = useI18n() 
+    const { t } = useI18n()
+    const { smAndDown } = useDisplay()
     interface Role {
       id: string | number;
       name: string;
+      description?: string;
       permissions?: Permission[]; 
     }
     interface Permission {
@@ -374,8 +380,13 @@ export default defineComponent({
       action: string;
     }
     const roles = ref<Role[]>([])
-    const loading = ref(false)
-    const search = ref('')
+    const roleTable = ref<{ $el?: HTMLElement } | null>(null)
+    const loading = ref(true)
+    const loadError = ref(false)
+    const search = ref<string | null>('')
+    const page = ref(1)
+    const itemsPerPage = ref(10)
+    const pageSizeOptions = [10, 25, 50]
     const editDialog = ref(false)
     const createDialog = ref(false)
     const editedRole = ref<Role | any>({})
@@ -412,14 +423,43 @@ export default defineComponent({
 
       { title: '', value: 'actions', sortable: false, align: 'end' as const },
     ]
+    const hasActiveFilters = computed(() => Boolean(search.value?.trim()))
+    const filteredRoles = computed(() => {
+      const query = search.value?.trim().toLocaleLowerCase() ?? ''
+      return roles.value.filter((role) => [role.name, role.description, ...(role.permissions ?? []).flatMap((permission) => [permission.resource, permission.action])]
+        .filter(Boolean).join(' ').toLocaleLowerCase().includes(query))
+    })
+    const pageCount = computed(() => Math.max(1, Math.ceil(filteredRoles.value.length / itemsPerPage.value)))
+    const paginationVisible = computed(() => smAndDown.value ? 3 : 7)
+    const resultSummary = computed(() => t('accounts.table.resultCount', { filtered: filteredRoles.value.length, total: roles.value.length }))
+    const pageRange = computed(() => {
+      const start = filteredRoles.value.length === 0 ? 0 : (page.value - 1) * itemsPerPage.value + 1
+      const end = Math.min(page.value * itemsPerPage.value, filteredRoles.value.length)
+      return t('accounts.table.pageRange', { start, end, total: filteredRoles.value.length })
+    })
+
+    watch([search, itemsPerPage], () => { page.value = 1 })
+    watch(pageCount, (count) => { if (page.value > count) page.value = count })
+    const resetFilters = () => { search.value = '' }
+    const configureScrollableTable = async () => {
+      await nextTick()
+      const wrapper = roleTable.value?.$el?.querySelector<HTMLElement>('.v-table__wrapper')
+      if (!wrapper) return
+      wrapper.setAttribute('role', 'region')
+      wrapper.setAttribute('tabindex', '0')
+      wrapper.setAttribute('aria-label', t('accounts.table.tableRegion', { section: t('accounts.roles') }))
+    }
 
     const loadRoles = async () => {
       loading.value = true
+      loadError.value = false
       try {
         const res = await axios.get('/api/roles')
         roles.value = res.data
+        await configureScrollableTable()
       } catch (e) {
         roles.value = []
+        loadError.value = true
       }
       loading.value = false
     }
@@ -431,20 +471,28 @@ export default defineComponent({
 
     const saveEdit = async () => {
       try {
-        await axios.put(`/api/roles/${editedRole.value.id}`, editedRole.value)
+        await axios.put(`/api/roles/${editedRole.value.id}`, editedRole.value, handledApiErrorConfig)
         await loadRoles()
         editDialog.value = false
       } catch (e) {
-        console.error('Error saving role:', e)
+        notifyApiError(e, 'saveRole')
       }
     }
 
     const deleteRole = async (role: Role) => {
+      const confirmed = await confirmDestructiveAction({
+        title: t('feedback.confirmDelete.title', { name: role.name }),
+        text: t('feedback.confirmDelete.message'),
+        confirmButtonText: t('global.delete'),
+        cancelButtonText: t('global.cancel'),
+      })
+      if (!confirmed) return
+
       try {
-        await axios.delete(`/api/roles/${role.id}`)
+        await axios.delete(`/api/roles/${role.id}`, handledApiErrorConfig)
         await loadRoles()
       } catch (e) {
-        console.error('Error deleting role:', e)
+        notifyApiError(e, 'deleteRole')
       }
     }
 
@@ -459,11 +507,11 @@ export default defineComponent({
 
     const saveCreate = async () => {
       try {
-        await axios.post('/api/roles', newRole.value)
+        await axios.post('/api/roles', newRole.value, handledApiErrorConfig)
         await loadRoles()
         createDialog.value = false
       } catch (e) {
-        console.error('Error creating role:', e)
+        notifyApiError(e, 'createRole')
       }
     }
 /*
@@ -483,31 +531,57 @@ export default defineComponent({
           switch (permission.action) {
             case 'write':
               return 'mdi-pencil';
-              break;
             case 'read':
               return 'mdi-eye';
-              break;
             case 'ok':
               return 'mdi-check';
-              break;
             default:
               return 'mdi-minus';
           }
-          return 
         }
       }
       return 'mdi-cancel'
     }
-      
+    const resourceLabelKeys: Record<string, string> = {
+      app: 'roles.form.permissions.apps',
+      pipeline: 'roles.form.permissions.pipelines',
+      user: 'roles.form.permissions.accounts',
+      config: 'roles.form.permissions.settings',
+      token: 'roles.form.permissions.tokens',
+      audit: 'roles.form.permissions.audit',
+      console: 'roles.form.permissions.console',
+      logs: 'roles.form.permissions.logs',
+      reboot: 'roles.form.permissions.reboot',
+    }
+    const getResourcePermissionLabel = (permissions: Permission[] = [], resource: string) => {
+      const level = permissions.find((permission) => permission.resource === resource)?.action ?? 'none'
+      return t('roles.permissionLabel', {
+        resource: t(resourceLabelKeys[resource]),
+        level: t(`roles.levels.${level}`),
+      })
+    }
     onMounted(() => {
       loadRoles()
     })
 
     return {
       roles,
+      roleTable,
       headers,
       loading,
+      loadError,
+      loadRoles,
       search,
+      filteredRoles,
+      hasActiveFilters,
+      resetFilters,
+      resultSummary,
+      page,
+      itemsPerPage,
+      pageSizeOptions,
+      pageCount,
+      paginationVisible,
+      pageRange,
       editDialog,
       createDialog,
       editedRole,
@@ -518,6 +592,7 @@ export default defineComponent({
       openCreateDialog,
       saveCreate,
       getResourcePermissions,
+      getResourcePermissionLabel,
       writeUserPermission,
     }
   },

@@ -37,4 +37,30 @@ test.describe('Auditoría Automatizada de Accesibilidad (WCAG 2.1 AA)', () => {
 
     expect(criticalViolations).toEqual([]);
   });
+
+  test('Debe auditar la navegación secundaria abierta en temas claro y oscuro', async ({ page }) => {
+    await page.goto('/profile');
+    const navDrawer = new NavDrawerPage(page);
+    await expect(navDrawer.settingsTrigger).toBeVisible({ timeout: 15000 });
+
+    for (const theme of ['light', 'dark'] as const) {
+      if (await navDrawer.getCurrentTheme() !== theme) {
+        await navDrawer.toggleTheme();
+      }
+
+      await navDrawer.openSettingsNavigation();
+      const accessibilityScanResults = await new AxeBuilder({ page })
+        .include('[data-testid="secondary-navigation"]')
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+        .disableRules(['aria-required-children', 'aria-required-parent', 'aria-required-attr'])
+        .analyze();
+
+      const criticalViolations = accessibilityScanResults.violations.filter(
+        v => v.impact === 'critical' || v.impact === 'serious'
+      );
+
+      expect(criticalViolations).toEqual([]);
+      await navDrawer.closeSecondaryNavigation();
+    }
+  });
 });

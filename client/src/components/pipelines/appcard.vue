@@ -1,167 +1,182 @@
 <template>
-<v-card
-    :loading="loadingState"
-    class="mt-4 mx-1 uct-card"
-    elevation="1"
-    color="cardBackground"
-    style="max-width: 600px;"
-    v-if="deleted === false"
-    >
-
-    <!-- @vue-expect-error el slot "progress" existe en runtime (viene del mixin de loading de Vuetify), pero no está tipado en VCard -->
-    <template v-slot:progress>
-      <v-progress-linear
-        color="primary"
-        height="2"
-        indeterminate
-      ></v-progress-linear>
-    </template>
-
-    <v-card-title class="d-flex align-center py-3">
-      <v-icon
-        start
-        size="default"
-        :color="(app.deploymentstrategy != 'docker') ? 'primary' : 'info'"
-        class="mr-2"
-      >{{ (app.deploymentstrategy != 'docker') ? 'mdi-git' : 'mdi-docker' }}</v-icon>
-      <router-link
-        class="font-weight-bold"
-        :to="{ name: 'App Dashboard', params: { pipeline: pipeline, phase: phase, app: app.name }}"
-      >{{ app.name }}</router-link>
-    </v-card-title>
-
-    <v-card-text class="pt-0">
-        <v-row
-            v-if="app.deploymentstrategy != 'docker'"
-            class="mx-0 my-1 align-center"
-        >
-            <v-icon start size="small" color="primary">mdi-source-branch</v-icon>
-            <div class="text-caption text-medium-emphasis text-truncate" style="max-width: 90%;">
-                {{ app.gitrepo.ssh_url }}
-            </div>
-        </v-row>
-        <v-row
-            v-if="app.deploymentstrategy == 'docker'"
-            class="mx-0 my-1 align-center"
-        >
-            <v-icon start size="small" color="info">mdi-docker</v-icon>
-            <div class="text-caption text-medium-emphasis text-truncate" style="max-width: 90%;">
-                {{ app.image.repository }}:{{ app.image.tag }}
-            </div>
-        </v-row>
-
-        <div class="d-flex flex-wrap align-center mt-2">
-            <v-chip size="small" label variant="tonal" color="primary" class="mr-1" v-if="app.deploymentstrategy != 'docker'">
-                <span v-if="autodeploy">Autodeploy | </span>{{ app.branch }}
-            </v-chip>
-            <v-chip size="small" label variant="tonal" color="secondary" class="mr-1 uct-code" v-if="app.deploymentstrategy != 'docker' && app.commithash">
-                {{ app.commithash }}
-            </v-chip>
+  <tr v-if="deleted === false" class="app-row">
+    <td>
+      <div class="app-identity">
+        <v-icon
+          :icon="app.deploymentstrategy !== 'docker' ? 'mdi-git' : 'mdi-docker'"
+          :color="app.deploymentstrategy !== 'docker' ? 'primary' : 'info'"
+          size="21"
+          aria-hidden="true"
+        />
+        <div>
+          <router-link :to="{ name: 'App Dashboard', params: { pipeline, phase, app: app.name } }">
+            {{ app.name }}
+          </router-link>
+          <small v-if="app.deploymentstrategy !== 'docker'" :title="app.gitrepo.ssh_url">
+            {{ app.gitrepo.ssh_url }}
+          </small>
+          <small v-else :title="`${app.image.repository}:${app.image.tag}`">
+            {{ app.image.repository }}:{{ app.image.tag }}
+          </small>
         </div>
-    </v-card-text>
+      </div>
+    </td>
 
+    <td>
+      <div class="deployment-details">
+        <v-chip
+          v-if="app.deploymentstrategy !== 'docker'"
+          size="x-small"
+          label
+          variant="tonal"
+          color="primary"
+          prepend-icon="mdi-source-branch"
+        >
+          {{ app.branch }}
+        </v-chip>
+        <v-chip
+          v-if="app.deploymentstrategy !== 'docker' && app.commithash"
+          size="x-small"
+          label
+          variant="outlined"
+          class="commit-chip"
+        >
+          {{ app.commithash }}
+        </v-chip>
+        <span v-if="autodeploy" class="autodeploy-label">
+          <v-icon icon="mdi-sync" size="14" aria-hidden="true" />
+          {{ $t('app.autodeploy') }}
+        </span>
+        <v-chip v-if="app.deploymentstrategy === 'docker'" size="x-small" label variant="tonal" color="info">
+          {{ app.image.tag }}
+        </v-chip>
+      </div>
+    </td>
 
-    <v-divider></v-divider>
-    <v-card-text v-if="metricsDisplay == 'bars'" class="py-2">
-      <v-row>
-        <v-col cols="6" class="pb-1 text-left uct-label">{{ $t('app.cpu') }}</v-col>
-        <v-col cols="6" class="pb-1 text-right uct-label">{{ $t('app.memory') }}</v-col>
-      </v-row>
-      <v-row v-for="metric in metrics" :key="metric.name" style="height:20px" class="my-1">
-        <v-col cols="6" class="text-left py-0"><v-progress-linear :value="metric.cpu.percentage" color="primary" class="mr-2 float-left" rounded></v-progress-linear></v-col>
-        <v-col cols="6" class="text-right py-0"><v-progress-linear :value="metric.memory.percentage" color="accent" class="float-left" rounded></v-progress-linear></v-col>
-      </v-row>
-    </v-card-text>
-    <v-card-text v-if="metricsDisplay == 'table'" class="py-2">
-      <v-row>
-        <v-col cols="8" class="pb-1 text-left uct-label">{{ $t('app.pod') }}</v-col>
-        <v-col cols="2" class="pb-1 text-left uct-label">{{ $t('app.cpu') }}</v-col>
-        <v-col cols="2" class="pb-1 text-right uct-label">{{ $t('app.memory') }}</v-col>
-      </v-row>
-      <v-row v-for="metric in metrics" :key="metric.name" id="metrics">
-        <v-col cols="8" class="py-1 text-left uct-code">{{metric.name}}</v-col>
-        <v-col cols="2" class="py-1 text-left uct-code"><span style="white-space: nowrap;">{{metric.cpu.usage}}{{metric.cpu.unit}}</span></v-col>
-        <v-col cols="2" class="py-1 text-right uct-code"><span style="white-space: nowrap;">{{metric.memory.usage}}{{metric.memory.unit}}</span></v-col>
-      </v-row>
-    </v-card-text>
-    <v-divider></v-divider>
+    <td>
+      <div class="resource-cell">
+        <v-progress-linear v-if="loadingState" color="primary" height="2" indeterminate />
+        <template v-if="metrics.length">
+          <div v-for="metric in metrics" :key="metric.name" class="resource-row">
+            <span class="pod-name" :title="metric.name">{{ metric.name }}</span>
+            <span v-if="metric.cpu.percentage != null" class="resource-value">
+              {{ $t('app.cpu') }} {{ metric.cpu.percentage }}%
+            </span>
+            <span v-else class="resource-value">
+              {{ $t('app.cpu') }} {{ metric.cpu.usage }}{{ metric.cpu.unit }}
+            </span>
+            <span v-if="metric.memory.percentage != null" class="resource-value">
+              {{ $t('app.memory') }} {{ metric.memory.percentage }}%
+            </span>
+            <span v-else class="resource-value">
+              {{ $t('app.memory') }} {{ metric.memory.usage }}{{ metric.memory.unit }}
+            </span>
+          </div>
+        </template>
+        <span v-else class="muted-value">{{ $t('app.list.metricsUnavailable') }}</span>
+      </div>
+    </td>
 
-    <span v-if="app.addons.length > 0">
-    <v-card-text class="py-2">
-      <v-avatar
-        rounded="sm"
-        v-for="addon in app.addons" :key="addon.id"
-        class="pa-1 mr-1"
-        color="secondary"
-        :image="addon.icon"
-        :alt="addon.displayName">
-      </v-avatar>
-    </v-card-text>
-    <v-divider></v-divider>
-    </span>
+    <td>
+      <div v-if="app.addons.length" class="addon-list">
+        <v-tooltip v-for="addon in app.addons" :key="addon.id" :text="addon.displayName" location="top">
+          <template #activator="{ props }">
+            <v-avatar
+              v-bind="props"
+              rounded="sm"
+              size="28"
+              color="secondary"
+              :image="addon.icon"
+              :aria-label="addon.displayName"
+            />
+          </template>
+        </v-tooltip>
+      </div>
+      <span v-else class="muted-value">—</span>
+    </td>
 
-
-    <v-card-actions class="px-3 py-2">
-        <v-btn
-            title="Restart App"
-            color="primary"
-            variant="text"
-            size="small"
-            :disabled="!authStore.hasPermission('reboot:ok')"
-            @click="restartApp()"
-        >
-            <v-icon>mdi-reload-alert</v-icon>
-        </v-btn>
-        <v-btn
-            title="Details"
-            color="primary"
-            variant="text"
-            size="small"
-            :disabled="!authStore.hasPermission('app:read') && !authStore.hasPermission('app:write')"
-            :to="{ name: 'App Dashboard', params: { pipeline: pipeline, phase: phase, app: app.name }}"
-        >
-            <v-icon>mdi-page-next-outline</v-icon>
-        </v-btn>
-        <v-btn
-            title="Edit"
-            color="primary"
-            variant="text"
-            size="small"
-            :disabled="!authStore.hasPermission('app:write')"
-            :to="{ name: 'App Form', params: { pipeline: pipeline, phase: phase, app: app.name }}"
-        >
-            <v-icon>mdi-pencil</v-icon>
-        </v-btn>
-        <v-btn
-            title="Open App"
-            v-if="app.ingress.hosts.length > 0"
-            color="primary"
-            variant="text"
-            size="small"
-            :href="'//'+app.ingress?.hosts[0].host" target="_blank"
-        >
-            <v-icon>mdi-open-in-new</v-icon>
-        </v-btn>
-        <v-spacer></v-spacer>
-        <v-btn
-            title="Delete App"
-            variant="text"
-            color="error"
-            size="small"
-            :disabled="!authStore.hasPermission('app:write')"
-            @click="deleteApp()"
-        >
-            <v-icon>mdi-delete</v-icon>
-        </v-btn>
-    </v-card-actions>
-</v-card>
+    <td>
+      <div class="actions-cell">
+        <v-tooltip :text="$t('app.actions.restart')" location="top">
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-reload-alert"
+              color="primary"
+              variant="text"
+              size="small"
+              :aria-label="`${$t('app.actions.restart')} ${app.name}`"
+              :disabled="!authStore.hasPermission('reboot:ok')"
+              @click="restartApp()"
+            />
+          </template>
+        </v-tooltip>
+        <v-tooltip :text="$t('app.nav.overview')" location="top">
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-arrow-right"
+              color="primary"
+              variant="text"
+              size="small"
+              :aria-label="`${$t('app.nav.overview')} ${app.name}`"
+              :disabled="!authStore.hasPermission('app:read') && !authStore.hasPermission('app:write')"
+              :to="{ name: 'App Dashboard', params: { pipeline, phase, app: app.name } }"
+            />
+          </template>
+        </v-tooltip>
+        <v-tooltip :text="$t('app.actions.edit')" location="top">
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-pencil-outline"
+              variant="text"
+              size="small"
+              :aria-label="`${$t('app.actions.edit')} ${app.name}`"
+              :disabled="!authStore.hasPermission('app:write')"
+              :to="{ name: 'App Form', params: { pipeline, phase, app: app.name } }"
+            />
+          </template>
+        </v-tooltip>
+        <v-tooltip v-if="app.ingress.hosts.length" :text="$t('app.actions.openApp')" location="top">
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-open-in-new"
+              color="primary"
+              variant="text"
+              size="small"
+              :aria-label="`${$t('app.actions.openApp')} ${app.name}`"
+              :href="`//${app.ingress.hosts[0].host}`"
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          </template>
+        </v-tooltip>
+        <v-tooltip :text="$t('app.actions.delete')" location="top">
+          <template #activator="{ props }">
+            <v-btn
+              v-bind="props"
+              icon="mdi-delete-outline"
+              variant="text"
+              color="error"
+              size="small"
+              :aria-label="`${$t('app.actions.delete')} ${app.name}`"
+              :disabled="!authStore.hasPermission('app:write')"
+              @click="deleteApp()"
+            />
+          </template>
+        </v-tooltip>
+      </div>
+    </td>
+  </tr>
 </template>
 
 <script lang="ts">
 import axios from "axios";
 import {  defineComponent } from 'vue'
-import Swal from 'sweetalert2';
 import { useAuthStore } from '../../stores/auth'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 const authStore = useAuthStore();
 
 type Metric = {
@@ -242,24 +257,16 @@ export default defineComponent({
         clearInterval(this.metricsInterval);
     },
     methods: {
-        deleteApp() {
-
-          Swal.fire({
-                title: "Delete App ”" + this.app.name + "” ?",
-                text: "Do you want to delete this App? This action cannot be undone. It will delete all the data associated with this app.",
-                icon: "question",
-                showCancelButton: true,
+        async deleteApp() {
+          const confirmed = await confirmDestructiveAction({
+                title: this.$t('app.list.deleteTitle', { name: this.app.name }),
+                text: this.$t('app.list.deleteDescription'),
                 confirmButtonText: this.$t('global.delete'),
                 cancelButtonText: this.$t('global.cancel'),
-                confirmButtonColor: "rgb(var(--v-theme-primary))",
-                background: "rgb(var(--v-theme-cardBackground))",
-                /*background: "rgb(var(--v-theme-on-surface-variant))",*/
-                color: "rgba(var(--v-theme-on-background),var(--v-high-emphasis-opacity));",
-            })
-            .then((result) => {
-                if (result.isConfirmed) {
+            });
+            if (confirmed) {
                   axios.delete(`/api/apps/${this.pipeline}/${this.phase}/${this.app.name}`)
-                    .then(response => {
+                    .then(() => {
                       //this.$router.push(`/pipeline/${this.pipeline}/apps`);
                       //console.log("deleteApp");
                       this.deleted = true;
@@ -269,13 +276,11 @@ export default defineComponent({
                       console.log(error);
                     });
                 return;
-                }
-            });
+            }
         },
         async restartApp() {
             axios.get(`/api/apps/${this.pipeline}/${this.phase}/${this.app.name}/restart`)
-            .then(response => {
-                //console.log(response);
+            .then(() => {
                 this.loadingState = true;
             })
             .catch(error => {
@@ -310,42 +315,152 @@ export default defineComponent({
 });
 </script>
 
-<style>
-.v-btn.v-size--default {
-    font-size: 0.675rem;
-}
-
-.mr-1.v-chip.v-size--default {
-    font-size: 12px;
-    height: 28px;
-}
-
-.v-application .text-subtitle-1 {
-    font-size: 0.825rem !important;
-}
-
-.v-application .v-card__title {
-    font-size: 1.1rem;
-}
-
-#metrics:nth-child(even) {
-  background-color: rgba(var(--v-theme-primary), .04);
-}
-#metrics:nth-child(odd) {
-  background-color: rgba(var(--v-theme-primary), .08);
-}
-
-.theme--light#metrics:nth-child(odd) {
-  background-color: rgba(var(--v-theme-primary), .08);
-}
-.theme--dark#metrics:nth-child(odd) {
-  background-color: rgba(var(--v-theme-primary), .12);
-}
-</style>
-
 <style scoped>
-.v-avatar {
-  background-color: rgba(70, 70, 70, 0.2);
-  margin-left: 10px
+.app-row {
+  transition: background-color 140ms ease-out;
+}
+
+.app-row:hover {
+  background: rgba(var(--v-theme-primary), .045);
+}
+
+.app-row > td {
+  min-height: 76px;
+  padding-right: 12px !important;
+  padding-left: 12px !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  color: rgb(var(--v-theme-on-cardBackground));
+  font-size: .8125rem;
+  vertical-align: middle;
+}
+
+.app-identity {
+  display: flex;
+  min-width: 180px;
+  align-items: flex-start;
+  gap: 11px;
+}
+
+.app-identity > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.app-identity a {
+  color: rgb(var(--v-theme-on-cardBackground));
+  font-size: .875rem;
+  font-weight: 600;
+  text-decoration-color: rgba(var(--v-theme-primary), .45);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.app-identity a:hover {
+  color: rgb(var(--v-theme-primary));
+  text-decoration-color: currentColor;
+}
+
+.app-identity small {
+  display: block;
+  max-width: 220px;
+  overflow: hidden;
+  color: rgb(var(--v-theme-on-cardBackground));
+  font-family: var(--uct-font-mono);
+  font-size: .6875rem;
+  opacity: .62;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deployment-details {
+  display: flex;
+  min-width: 120px;
+  max-width: 210px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.commit-chip {
+  max-width: 112px;
+  font-family: var(--uct-font-mono);
+}
+
+.commit-chip :deep(.v-chip__content) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.autodeploy-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: rgb(var(--v-theme-on-cardBackground));
+  font-size: .6875rem;
+  opacity: .68;
+}
+
+.resource-cell {
+  display: grid;
+  min-width: 210px;
+  gap: 5px;
+}
+
+.resource-row {
+  display: grid;
+  grid-template-columns: minmax(78px, 1fr) auto auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.pod-name {
+  overflow: hidden;
+  font-family: var(--uct-font-mono);
+  font-size: .6875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.resource-value {
+  color: rgb(var(--v-theme-on-cardBackground));
+  font-family: var(--uct-font-mono);
+  font-size: .6875rem;
+  font-variant-numeric: tabular-nums;
+  opacity: .72;
+  white-space: nowrap;
+}
+
+.addon-list {
+  display: flex;
+  min-width: 60px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.addon-list .v-avatar {
+  background-color: rgba(var(--v-theme-on-cardBackground), .08);
+}
+
+.muted-value {
+  color: rgb(var(--v-theme-on-cardBackground));
+  font-size: .75rem;
+  opacity: .55;
+}
+
+.actions-cell {
+  display: flex;
+  min-width: 160px;
+  justify-content: flex-end;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-row {
+    transition: none;
+  }
 }
 </style>

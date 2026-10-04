@@ -26,11 +26,9 @@ test.describe('Validación Visual y Funcional de Todas las Vistas al Estilo UCT'
     const navDrawer = new NavDrawerPage(page);
     await expect(navDrawer.drawer).toBeVisible({ timeout: 15000 });
 
-    // Verificar que el branding de la UCT esté en el Drawer
+    // El rail principal no debe reservar espacio para el logotipo institucional
     const drawerLogo = navDrawer.drawer.locator('img[alt="UCT"]');
-    if (await drawerLogo.isVisible()) {
-      await expect(drawerLogo).toBeVisible();
-    }
+    await expect(drawerLogo).toHaveCount(0);
 
     // Verificar que al desplegar Settings no haya scroll lateral
     const settingsItem = navDrawer.drawer.locator('.v-list-item').filter({ hasText: /settings|configuración/i }).first();
@@ -53,6 +51,25 @@ test.describe('Validación Visual y Funcional de Todas las Vistas al Estilo UCT'
     // Conmutar de vuelta
     await navDrawer.toggleTheme();
     expect(await navDrawer.getCurrentTheme()).toBe(initialTheme);
+  });
+
+  test('Barra secundaria debe conservar su composición visual en temas claro y oscuro', async ({ page }, testInfo) => {
+    await page.goto('/profile');
+    const navDrawer = new NavDrawerPage(page);
+    await expect(navDrawer.settingsTrigger).toBeVisible({ timeout: 15000 });
+
+    for (const theme of ['light', 'dark'] as const) {
+      if (await navDrawer.getCurrentTheme() !== theme) {
+        await navDrawer.toggleTheme();
+      }
+
+      await navDrawer.openSettingsNavigation();
+      await page.screenshot({
+        path: testInfo.outputPath(`secondary-navigation-${theme}.png`),
+        fullPage: true,
+      });
+      await navDrawer.closeSecondaryNavigation();
+    }
   });
 
   test('Recorrido por todas las vistas principales de la aplicación con tema UCT', async ({ page }) => {

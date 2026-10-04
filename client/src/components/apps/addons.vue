@@ -215,6 +215,7 @@ import axios from "axios";
 import set from 'lodash/set';
 import get from 'lodash/get';
 import { defineComponent } from 'vue'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 
 type Addon = {
     id: string,
@@ -320,7 +321,15 @@ export default defineComponent({
                 console.log(error);
             });
         },
-        deleteAddon(addon: Addon) {
+        async deleteAddon(addon: Addon) {
+            const confirmed = await confirmDestructiveAction({
+                title: this.$t('feedback.confirmRemove.title', { name: addon.displayName || addon.kind }),
+                text: this.$t('feedback.confirmRemove.message'),
+                confirmButtonText: this.$t('global.remove'),
+                cancelButtonText: this.$t('global.cancel'),
+            });
+            if (!confirmed) return;
+
             // remove addon from local view and kuberoapp yaml
             for (let i = 0; i < this.addons.length; i++) {
               if (this.addons[i].kind == addon.kind) {

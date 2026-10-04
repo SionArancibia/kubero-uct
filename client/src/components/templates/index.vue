@@ -252,6 +252,24 @@ const templates = axios.create();
 templates.defaults.headers.common = {};
 const router = useRouter();
 
+// Plantillas verificadas para el contexto UCT; el resto del catálogo de
+// kubero-dev se oculta para evitar opciones sin probar y acelerar la carga.
+const ENABLED_TEMPLATES = [
+    'qdrant',
+    'n8n',
+    'grafana',
+    'pgadmin',
+    'wordpress',
+    'phpmyadmin',
+    'laravel',
+    'mongodb-express',
+    'redis-commander',
+    'webkubectl',
+    'chartdb',
+];
+
+const HIDDEN_CATALOGS = ['Kubero Frameworks'];
+
 export default defineComponent({
     sockets: {
     },
@@ -325,6 +343,9 @@ export default defineComponent({
             axios.get(`/api/config/templates`)
             .then(response => {
                 self.templates = response.data as Templates;
+                self.templates.catalogs = self.templates.catalogs.filter((catalog) => {
+                    return !HIDDEN_CATALOGS.includes(catalog.name);
+                });
                 if (self.templates.catalogs.length > 0 && self.templates.enabled == true) {
                     self.loadTemplates(self.templates.catalogs[catalogId].index.url)
                 }
@@ -359,6 +380,18 @@ export default defineComponent({
             templates.get(indexUrl)
             .then(response => {
                 self.templatesList = response.data;
+                self.templatesList.services = self.templatesList.services.filter((template) => {
+                    return ENABLED_TEMPLATES.includes(template.dirname);
+                });
+
+                const recalculatedCategories: { [key: string]: number } = {};
+                self.templatesList.services.forEach((template) => {
+                    template.categories.forEach((category) => {
+                        recalculatedCategories[category] = (recalculatedCategories[category] || 0) + 1;
+                    });
+                });
+                self.templatesList.categories = recalculatedCategories;
+
                 forEach(self.templatesList.categories, (value, key) => {
                     self.categories.push({ title: key + ' (' + value + ')', value: key });
                 });

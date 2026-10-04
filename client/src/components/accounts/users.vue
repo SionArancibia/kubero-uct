@@ -1,36 +1,49 @@
 <template>
   <v-container>
-    <v-alert
-      v-if="actionError"
-      type="error"
-      variant="tonal"
-      closable
-      class="mb-4"
-      @click:close="actionError = ''"
-    >{{ actionError }}</v-alert>
+    <v-alert v-if="loadError" type="warning" variant="tonal" class="ma-4">
+      <div class="d-flex align-center justify-space-between ga-4">
+        <span>{{ $t('accounts.errors.loadUsers') }}</span>
+        <v-btn variant="outlined" color="warning" size="small" @click="loadUsers">{{ $t('accounts.retry') }}</v-btn>
+      </div>
+    </v-alert>
     <v-data-table
+      v-if="!loadError"
+      ref="userTable"
+      v-model:page="page"
       :headers="headers"
-      :items="users"
+      :items="filteredUsers"
+      :items-per-page="itemsPerPage"
       :loading="loading"
-      class="elevation-0 border-0"
+      class="account-data-table account-data-table--wide"
       item-key="id"
-      :search="search"
+      hide-default-footer
     >
       <template #top>
-        <v-text-field
-          v-model="search"
-          :label="$t('user.actions.search')"
-          prepend-inner-icon="mdi-magnify"
-          single-line
-          hide-details
-          outlined
-          class="mx-0 mt-2"
-          clearable
-          density="compact"
-        ></v-text-field>
+        <div class="account-table-toolbar account-table-toolbar--filters">
+          <v-text-field v-model="search" class="account-table-toolbar__search" :label="$t('user.actions.search')" prepend-inner-icon="mdi-magnify" hide-details variant="outlined" clearable density="compact" />
+          <v-select v-model="roleFilter" :items="roleFilterOptions" :label="$t('accounts.userFilters.role')" hide-details variant="outlined" density="compact" />
+          <v-select v-model="teamFilter" :items="teamFilterOptions" :label="$t('accounts.userFilters.team')" hide-details variant="outlined" density="compact" />
+          <v-select v-model="statusFilter" :items="statusFilterOptions" :label="$t('accounts.userFilters.status')" hide-details variant="outlined" density="compact" />
+          <v-btn v-if="hasActiveFilters" class="account-table-toolbar__clear" variant="text" color="primary" prepend-icon="mdi-filter-remove-outline" @click="resetFilters">
+            {{ $t('accounts.userFilters.clear') }}
+          </v-btn>
+        </div>
+        <div class="account-table-summary" aria-live="polite">
+          <span>{{ $t('accounts.userFilters.resultCount', { filtered: filteredUsers.length, total: users.length }) }}</span>
+          <v-chip v-if="hasActiveFilters" size="small" variant="tonal" color="primary" label>{{ $t('accounts.table.filtered') }}</v-chip>
+        </div>
+      </template>
+      <template v-slot:[`header.actions`]><span class="sr-only">{{ $t('accounts.table.actions') }}</span></template>
+      <template #loading><v-skeleton-loader type="table-row@6" /></template>
+      <template #no-data>
+        <div class="account-empty-state">
+          <v-icon :icon="hasActiveFilters ? 'mdi-filter-off-outline' : 'mdi-account-off-outline'" size="38" color="primary" aria-hidden="true" />
+          <h2>{{ hasActiveFilters ? $t('accounts.userFilters.noResults') : $t('accounts.userFilters.noUsers') }}</h2>
+          <v-btn v-if="hasActiveFilters" variant="outlined" color="primary" @click="resetFilters">{{ $t('accounts.userFilters.clear') }}</v-btn>
+        </div>
       </template>
       <template v-slot:[`item.isActive`]="{ item }">
-        <v-chip :color="item.isActive ? 'green' : 'red'" dark>
+        <v-chip :color="item.isActive ? 'success' : 'error'" variant="tonal" size="small" label>
           {{ item.isActive ? $t('user.active') : $t('user.disabled') }}
         </v-chip>
       </template>
@@ -78,11 +91,11 @@
         </v-btn>
       </template>
       <template v-slot:[`item.username`]="{ item }">
-        <b><span><nobr>
+        <div class="account-identity">
           <v-avatar size="30" class="mr-2">
             <v-img :src="item.image || '/img/icons/avatar.svg'" alt="User avatar" />
-          </v-avatar>{{ item.username }}
-        </nobr></span></b>
+          </v-avatar><strong>{{ item.username }}</strong>
+        </div>
       </template>
       <template v-slot:[`item.createdAt`]="{ item }">
         {{ formatDate(item.createdAt) }}
@@ -91,51 +104,23 @@
         {{ formatDate(item.updatedAt) }}
       </template>
       <template v-slot:[`item.actions`]="{ item }">
-
-        <v-btn
-          elevation="0"
-          variant="tonal"
-          size="small"
-          class="ma-2"
-          @click="deleteUser(item)"
-          :disabled="item.username === 'admin' || item.username === 'system' || !writeUserPermission"
-        >
-          <v-icon color="primary">
-            mdi-delete
-          </v-icon>
-        </v-btn>
-        
-        <v-btn
-          elevation="0"
-          variant="tonal"
-          size="small"
-          class="ma-2"
-          @click="openChangePasswordDialog(item)"
-          :disabled="item.username === 'system' || !writeUserPermission"
-        >
-          <v-icon color="primary">
-            mdi-lock-reset
-          </v-icon>
-        </v-btn>
-
-        <v-btn
-          elevation="0"
-          variant="tonal"
-          size="small"
-          class="ma-2"
-          @click="openEditUserDialog(item)"
-          :disabled="item.username === 'admin' || item.username === 'system' || !writeUserPermission"
-          >
-            <v-icon color="primary">
-              mdi-pencil
-            </v-icon>
-        </v-btn>
-        
+        <div class="account-actions">
+          <v-tooltip :text="$t('global.delete')" location="top"><template #activator="{ props }"><v-btn v-bind="props" icon="mdi-delete-outline" variant="text" color="error" size="small" :aria-label="`${$t('global.delete')} ${item.username}`" :disabled="item.username === 'admin' || item.username === 'system' || !writeUserPermission" @click="deleteUser(item)" /></template></v-tooltip>
+          <v-tooltip :text="$t('user.changePassword')" location="top"><template #activator="{ props }"><v-btn v-bind="props" icon="mdi-lock-reset" variant="text" size="small" :aria-label="$t('user.changePasswordFor', { user: item.username })" :disabled="item.username === 'system' || !writeUserPermission" @click="openChangePasswordDialog(item)" /></template></v-tooltip>
+          <v-tooltip :text="$t('global.edit')" location="top"><template #activator="{ props }"><v-btn v-bind="props" icon="mdi-pencil-outline" variant="text" size="small" :aria-label="`${$t('global.edit')} ${item.username}`" :disabled="item.username === 'admin' || item.username === 'system' || !writeUserPermission" @click="openEditUserDialog(item)" /></template></v-tooltip>
+        </div>
+      </template>
+      <template #bottom>
+        <footer v-if="!loading && filteredUsers.length > 0" class="account-table-footer">
+          <div class="account-page-size"><span>{{ $t('accounts.table.rowsPerPage') }}</span><v-select v-model="itemsPerPage" :items="pageSizeOptions" density="compact" variant="outlined" hide-details :aria-label="$t('accounts.table.rowsPerPage')" /></div>
+          <v-pagination v-model="page" :length="pageCount" :total-visible="paginationVisible" density="comfortable" :aria-label="$t('accounts.table.paginationLabel')" />
+          <span class="account-page-range">{{ pageRange }}</span>
+        </footer>
       </template>
     </v-data-table>
 
     <!-- Button to add a user -->
-    <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+    <div class="legacy-create-control">
       <v-btn
         fab
         color="primary"
@@ -153,15 +138,6 @@
       <v-card color="cardBackground" class="uct-card">
         <v-card-title class="text-h6 font-weight-bold">{{ $t('user.actions.edit') }}</v-card-title>
         <v-card-text>
-          <v-alert
-            v-if="actionError"
-            type="error"
-            variant="tonal"
-            closable
-            density="compact"
-            class="mb-4"
-            @click:close="actionError = ''"
-          >{{ actionError }}</v-alert>
           <v-text-field v-model="editedUser.username" :label="$t('user.username')"></v-text-field>
           <v-text-field v-model="editedUser.firstName" :label="$t('user.firstName')"></v-text-field>
           <v-text-field v-model="editedUser.lastName" :label="$t('user.lastName')"></v-text-field>
@@ -184,7 +160,7 @@
             multiple
             clearable
           >
-            <template v-slot:selection="{ item, index }">
+            <template v-slot:selection="{ item }">
               <v-chip :text="item.title"></v-chip>
             </template>
           </v-select>
@@ -202,15 +178,6 @@
       <v-card color="cardBackground" class="uct-card">
         <v-card-title class="text-h6 font-weight-bold">{{ $t('user.actions.create') }}</v-card-title>
         <v-card-text>
-          <v-alert
-            v-if="actionError"
-            type="error"
-            variant="tonal"
-            closable
-            density="compact"
-            class="mb-4"
-            @click:close="actionError = ''"
-          >{{ actionError }}</v-alert>
           <v-text-field v-model="newUser.username" :label="$t('user.username')"></v-text-field>
           <v-text-field v-model="newUser.firstName" :label="$t('user.firstName')"></v-text-field>
           <v-text-field v-model="newUser.lastName" :label="$t('user.lastName')"></v-text-field>
@@ -234,7 +201,7 @@
             multiple
             clearable
           >
-            <template v-slot:selection="{ item, index }">
+            <template v-slot:selection="{ item }">
               <v-chip :text="item.title"></v-chip>
             </template>
           </v-select>
@@ -274,16 +241,20 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from 'vue'
+import { computed, defineComponent, nextTick, ref, onMounted, watch } from 'vue'
 import axios from 'axios'
+import { useDisplay } from 'vuetify'
 import { useAuthStore } from '../../stores/auth'
 import { useI18n } from 'vue-i18n'
+import { handledApiErrorConfig, notifyApiError } from '../../utils/apiFeedback'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 
 export default defineComponent({
   name: 'UserList',
   setup() {
 
-    const { t } = useI18n() 
+    const { t } = useI18n()
+    const { smAndDown } = useDisplay()
     interface User {
       id: string | number;
       username: string;
@@ -312,8 +283,16 @@ export default defineComponent({
       name: string;
     }
     const users = ref<User[]>([])
-    const loading = ref(false)
-    const search = ref('')
+    const userTable = ref<{ $el?: HTMLElement } | null>(null)
+    const loading = ref(true)
+    const loadError = ref(false)
+    const search = ref<string | null>('')
+    const roleFilter = ref<string | number>('all')
+    const teamFilter = ref<string | number>('all')
+    const statusFilter = ref('all')
+    const page = ref(1)
+    const itemsPerPage = ref(10)
+    const pageSizeOptions = [10, 25, 50]
     const editDialog = ref(false)
     const createDialog = ref(false)
     const changePasswordDialog = ref(false)
@@ -346,29 +325,87 @@ export default defineComponent({
       { text: 'Created', value: 'createdAt' },
       { text: 'Updated', value: 'updatedAt' },
       */
-      //{ title: t('user.status'), value: 'isActive' },
+      { title: t('user.status'), value: 'isActive' },
       { title: '', value: 'actions', sortable: false, align: 'end' as const },
     ]
 
+    const roleFilterOptions = computed(() => {
+      const available = new Map<string, Role>()
+      for (const role of roles.value) available.set(String(role.id), role)
+      for (const user of users.value) if (user.role) available.set(String(user.role.id), user.role)
+      return [
+        { title: t('accounts.userFilters.allRoles'), value: 'all' },
+        ...[...available.values()].sort((a, b) => a.name.localeCompare(b.name)).map((role) => ({ title: role.name, value: role.id })),
+      ]
+    })
+    const teamFilterOptions = computed(() => {
+      const available = new Map<string, Team>()
+      for (const team of teams.value) available.set(String(team.id), team)
+      for (const user of users.value) for (const team of user.userGroups ?? []) available.set(String(team.id), team)
+      return [
+        { title: t('accounts.userFilters.allTeams'), value: 'all' },
+        ...[...available.values()].sort((a, b) => a.name.localeCompare(b.name)).map((team) => ({ title: team.name, value: team.id })),
+      ]
+    })
+    const statusFilterOptions = computed(() => [
+      { title: t('accounts.userFilters.allStatuses'), value: 'all' },
+      { title: t('user.active'), value: 'active' },
+      { title: t('user.disabled'), value: 'disabled' },
+    ])
+    const hasActiveFilters = computed(() => Boolean(search.value?.trim()) || roleFilter.value !== 'all' || teamFilter.value !== 'all' || statusFilter.value !== 'all')
+    const filteredUsers = computed(() => {
+      const query = search.value?.trim().toLocaleLowerCase() ?? ''
+      return users.value.filter((user) => {
+        const searchable = [user.username, user.firstName, user.lastName, user.email, user.role?.name, ...(user.userGroups?.map((team) => team.name) ?? [])]
+          .filter(Boolean)
+          .join(' ')
+          .toLocaleLowerCase()
+        const matchesSearch = !query || searchable.includes(query)
+        const matchesRole = roleFilter.value === 'all' || user.role?.id === roleFilter.value
+        const matchesTeam = teamFilter.value === 'all' || user.userGroups?.some((team) => team.id === teamFilter.value)
+        const matchesStatus = statusFilter.value === 'all' || (statusFilter.value === 'active' ? user.isActive : !user.isActive)
+        return matchesSearch && matchesRole && matchesTeam && matchesStatus
+      })
+    })
+    const pageCount = computed(() => Math.max(1, Math.ceil(filteredUsers.value.length / itemsPerPage.value)))
+    const paginationVisible = computed(() => smAndDown.value ? 3 : 7)
+    const pageRange = computed(() => {
+      const start = filteredUsers.value.length === 0 ? 0 : (page.value - 1) * itemsPerPage.value + 1
+      const end = Math.min(page.value * itemsPerPage.value, filteredUsers.value.length)
+      return t('accounts.table.pageRange', { start, end, total: filteredUsers.value.length })
+    })
+
+    watch([search, roleFilter, teamFilter, statusFilter, itemsPerPage], () => { page.value = 1 })
+    watch(pageCount, (count) => { if (page.value > count) page.value = count })
+
+    const resetFilters = () => {
+      search.value = ''
+      roleFilter.value = 'all'
+      teamFilter.value = 'all'
+      statusFilter.value = 'all'
+    }
+
+    const configureScrollableTable = async () => {
+      await nextTick()
+      const wrapper = userTable.value?.$el?.querySelector<HTMLElement>('.v-table__wrapper')
+      if (!wrapper) return
+      wrapper.setAttribute('role', 'region')
+      wrapper.setAttribute('tabindex', '0')
+      wrapper.setAttribute('aria-label', t('accounts.userFilters.tableRegion'))
+    }
+
     const loadUsers = async () => {
       loading.value = true
+      loadError.value = false
       try {
         const res = await axios.get('/api/users')
         users.value = res.data
+        await configureScrollableTable()
       } catch (e) {
         users.value = []
+        loadError.value = true
       }
       loading.value = false
-    }
-
-    // El server explica por qué rechaza una acción (último administrador, equipo
-    // protegido, id que ya no existe...). Antes solo iba a la consola y la
-    // pantalla parecía no hacer nada.
-    const actionError = ref('')
-    const errorText = (e: any): string => {
-      const message = e?.response?.data?.message
-      if (Array.isArray(message)) return message.join(', ')
-      return message || e?.message || 'Error'
     }
 
     const loadTeams = async () => {
@@ -390,7 +427,6 @@ export default defineComponent({
 
     const openEditUserDialog = async (user: User) => {
       editedUser.value = { ...user }
-      actionError.value = ''
       // los equipos y roles se pueden haber creado o borrado en otra pestaña
       // desde que se cargó esta pantalla: se recargan al abrir el formulario
       await Promise.all([loadTeams(), loadRoles()])
@@ -399,22 +435,28 @@ export default defineComponent({
 
     const saveEdit = async () => {
       try {
-        await axios.put(`/api/users/id/${editedUser.value.id}`, editedUser.value)
+        await axios.put(`/api/users/id/${editedUser.value.id}`, editedUser.value, handledApiErrorConfig)
         await loadUsers()
         editDialog.value = false
       } catch (e) {
-        console.error('Error saving user:', e)
-        actionError.value = errorText(e)
+        notifyApiError(e, 'saveUser')
       }
     }
 
     const deleteUser = async (user: User) => {
+      const confirmed = await confirmDestructiveAction({
+        title: t('feedback.confirmDelete.title', { name: user.username }),
+        text: t('feedback.confirmDelete.message'),
+        confirmButtonText: t('global.delete'),
+        cancelButtonText: t('global.cancel'),
+      })
+      if (!confirmed) return
+
       try {
-        await axios.delete(`/api/users/id/${user.id}`)
+        await axios.delete(`/api/users/id/${user.id}`, handledApiErrorConfig)
         await loadUsers()
       } catch (e) {
-        console.error('Error deleting user:', e)
-        actionError.value = errorText(e)
+        notifyApiError(e, 'deleteUser')
       }
     }
 
@@ -431,7 +473,6 @@ export default defineComponent({
     }
 
     const openCreateDialog = async () => {
-      actionError.value = ''
       // Antes la lista de equipos se cargaba solo al abrir la pestaña: si un
       // equipo se borraba y se volvía a crear (id nuevo), el formulario seguía
       // ofreciendo el id viejo y el alta fallaba sin ningún mensaje hasta
@@ -452,12 +493,11 @@ export default defineComponent({
 
     const saveCreate = async () => {
       try {
-        await axios.post('/api/users', newUser.value)
+        await axios.post('/api/users', newUser.value, handledApiErrorConfig)
         await loadUsers()
         createDialog.value = false
       } catch (e) {
-        console.error('Error creating user:', e)
-        actionError.value = errorText(e)
+        notifyApiError(e, 'createUser')
       }
     }
 
@@ -474,20 +514,27 @@ export default defineComponent({
       try {
         await axios.put(`/api/users/id/${editedUser.value.id}/password`, {
           password: editedUser.value.password,
-        })
+        }, handledApiErrorConfig)
         changePasswordDialog.value = false
       } catch (e) {
-        console.error('Error changing password:', e)
+        notifyApiError(e, 'changeUserPassword')
       }
     }
 
     const deleteGroupFromUser = async (team: any, user: User) => {
+      const confirmed = await confirmDestructiveAction({
+        title: t('feedback.confirmRemove.title', { name: team.name }),
+        text: t('feedback.confirmRemove.message'),
+        confirmButtonText: t('global.remove'),
+        cancelButtonText: t('global.cancel'),
+      })
+      if (!confirmed) return
+
       try {
-        await axios.delete(`/api/users/${user.id}/groups/${team.id}`)
+        await axios.delete(`/api/users/${user.id}/groups/${team.id}`, handledApiErrorConfig)
         await loadUsers()
       } catch (e) {
-        console.error('Error removing group from user:', e)
-        actionError.value = errorText(e)
+        notifyApiError(e, 'removeUserTeam')
       }
     }
 
@@ -499,9 +546,27 @@ export default defineComponent({
 
     return {
       users,
+      userTable,
       headers,
       loading,
+      loadError,
+      loadUsers,
       search,
+      roleFilter,
+      teamFilter,
+      statusFilter,
+      roleFilterOptions,
+      teamFilterOptions,
+      statusFilterOptions,
+      filteredUsers,
+      page,
+      itemsPerPage,
+      pageSizeOptions,
+      pageCount,
+      paginationVisible,
+      pageRange,
+      hasActiveFilters,
+      resetFilters,
       openEditUserDialog,
       deleteUser,
       editDialog,
@@ -511,7 +576,6 @@ export default defineComponent({
       createDialog,
       newUser,
       openCreateDialog,
-      actionError,
       changePasswordDialog,
       openChangePasswordDialog,
       saveChangePassword,

@@ -114,6 +114,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { confirmDestructiveAction } from '../../utils/destructiveConfirmation'
 
 // Types
 import { Catalog } from './form.vue'
@@ -141,7 +142,15 @@ export default defineComponent({
         }
     },
     methods: {
-        deleteBuildpack(catalog: Catalog) {
+        async deleteBuildpack(catalog: Catalog) {
+            const confirmed = await confirmDestructiveAction({
+                title: this.$t('feedback.confirmRemove.title', { name: catalog.name }),
+                text: this.$t('feedback.confirmRemove.message'),
+                confirmButtonText: this.$t('global.remove'),
+                cancelButtonText: this.$t('global.cancel'),
+            })
+            if (!confirmed) return
+
             this.panel = -1
             this.settings.kubero.config.templates.catalogs.splice(this.settings.kubero.config.templates.catalogs.indexOf(catalog), 1)
         },

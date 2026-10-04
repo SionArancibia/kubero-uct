@@ -1,22 +1,22 @@
 <template>
-    <v-container>
-        <v-row>
+    <v-container fluid class="app-stats">
+        <v-row class="ma-0">
             <v-sheet
+                class="app-stats__surface"
                 width="100%"
-                tile
-                color="rgb(var(--v-theme-background))"
+                color="transparent"
             >
-                <div class="mb-5">
-                    <h1>{{ appData.spec.name }}</h1>
-                    <v-table density="compact" style="background:rgb(var(--v-theme-background))" v-if="appData.spec.gitrepo != undefined">
+                <section class="app-stats__section">
+                    <h2 class="app-stats__title">{{ $t('app.nav.overview') }}</h2>
+                    <v-table class="app-stats__table app-stats__table--details" density="comfortable" v-if="appData.spec.gitrepo != undefined">
                         <tbody>
                         <tr>
                             <th>{{ $t('app.domains') }}</th>
                             <td>
-                                <ul style="list-style-type: none; padding: 0;">
+                                <ul class="app-stats__domains">
                                     <li v-for="host in appData.spec.ingress.hosts" :key="host.host">
                                         <a :href="'https://' + host.host" target="_blank">{{ host.host }}</a> 
-                                        <v-icon size="x-small" style="color: rgba(var(--v-theme-primary), var(--v-high-emphasis-opacity));">mdi-open-in-new</v-icon>
+                                        <v-icon size="x-small" color="primary">mdi-open-in-new</v-icon>
                                     </li>
                                 </ul>
                             </td>
@@ -67,11 +67,11 @@
                     <div><b>web : </b>{{ appData.spec.web.replicaCount }}</div>
                     <div><b>worker : </b>{{ appData.spec.worker.replicaCount }}</div>
                     -->
-                </div>
-                <div class="mb-3">
-                    <h3>{{ $t('app.titles.consumption') }}</h3>
-                </div>
-                <div class="px-5" v-if="metricsDisplay == 'bars'">
+                </section>
+
+                <section class="app-stats__section">
+                    <h2 class="app-stats__title">{{ $t('app.titles.consumption') }}</h2>
+                <div class="app-stats__metrics" v-if="metricsDisplay == 'bars'">
                     <v-row>
                         <v-col cols="6" class="pb-0 text-left text-caption font-weight-light">CPU</v-col>
                         <v-col cols="6" class="pb-0 text-right text-caption font-weight-light">Memory</v-col>
@@ -81,7 +81,7 @@
                         <v-col cols="6" class="text-right"><v-progress-linear :value="metric.memory.percentage" color="accent" class="float-left" rounded></v-progress-linear></v-col>
                     </v-row>
                 </div>
-                <div class="px-3" v-if="metricsDisplay == 'table'">
+                <div class="app-stats__metrics app-stats__metrics--table" v-if="metricsDisplay == 'table'">
                     <v-row>
                         <v-col cols="8" class="pb-0 text-left text-caption font-weight-light">Pod</v-col>
                         <v-col cols="1" class="pb-0 text-left text-caption font-weight-light">CPU</v-col>
@@ -95,20 +95,25 @@
                         <v-col cols="2" class="py-0 text-right text-body-2">{{metric.uptime.formatted}}</v-col>
                     </v-row>
                 </div>
-                <div class="mb-5 mt-10">
-                    <h3 class="d-flex align-center">
+                </section>
+
+                <section class="app-stats__section">
+                    <div class="app-stats__section-header">
+                    <h2 class="app-stats__title">
                         {{ $t('app.titles.environmentVariables') }}
+                    </h2>
                         <v-btn
-                            variant="text"
+                            color="primary"
+                            variant="tonal"
                             size="small"
-                            class="ml-2"
+                            class="app-stats__reveal"
                             :prepend-icon="showEnvValues ? 'mdi-eye-off' : 'mdi-eye'"
                             @click="showEnvValues = !showEnvValues"
                         >
                             {{ showEnvValues ? $t('app.form.hideEnvValues') : $t('app.form.showEnvValues') }}
                         </v-btn>
-                    </h3>
-                    <v-table density="compact" style="background:rgb(var(--v-theme-background))">
+                    </div>
+                    <v-table class="app-stats__table app-stats__table--code" density="comfortable">
                         <thead>
                         <tr>
                             <th class="text-left">
@@ -127,10 +132,11 @@
                         </tr>
                         </tbody>
                     </v-table>
-                </div>
-                <div class="mb-5 mt-10" v-if="appData.spec.saAnnotations?.length > 0">
-                    <h3>{{ $t('app.titles.serviceAccountAnnotations') }}</h3>
-                    <v-table density="compact" style="background:rgb(var(--v-theme-background))">
+                </section>
+
+                <section class="app-stats__section" v-if="appData.spec.saAnnotations?.length > 0">
+                    <h2 class="app-stats__title">{{ $t('app.titles.serviceAccountAnnotations') }}</h2>
+                    <v-table class="app-stats__table app-stats__table--code" density="comfortable">
                         <thead>
                         <tr>
                             <th class="text-left">
@@ -149,9 +155,10 @@
                         </tr>
                         </tbody>
                     </v-table>
-                </div>
-                <div class="mb-5" v-if="appData.spec?.extraVolumes?.length > 0">
-                    <h3>{{ $t('app.titles.volumes') }}</h3>
+                </section>
+
+                <section class="app-stats__section" v-if="appData.spec?.extraVolumes?.length > 0">
+                    <h2 class="app-stats__title">{{ $t('app.titles.volumes') }}</h2>
                     <!--{{ appData.spec.extraVolumes }}-->
                     <v-row class="pt-5">
                         <v-col 
@@ -162,8 +169,9 @@
                             <v-card
                             :title="volume.name"
                             :subtitle="volume.mountPath"
-                            class="mx-auto"
+                            class="app-stats__volume uct-card"
                             color="cardBackground"
+                            elevation="0"
                             >
                                 <v-row>
                                     <v-col class="center" style="width: 40px; flex-grow: 0;">
@@ -179,10 +187,11 @@
                             </v-card>
                         </v-col>
                     </v-row>
-                </div>
-                <div class="mb-5">
-                    <h3>{{ $t('app.titles.cronjobs') }}</h3>
-                    <v-table density="compact" style="background:rgb(var(--v-theme-background))">
+                </section>
+
+                <section class="app-stats__section">
+                    <h2 class="app-stats__title">{{ $t('app.titles.cronjobs') }}</h2>
+                    <v-table class="app-stats__table app-stats__table--code" density="comfortable">
                         <thead>
                         <tr>
                             <th class="text-left">
@@ -205,11 +214,12 @@
                         </tr>
                         </tbody>
                     </v-table>
-                </div>
-                <div class="mb-5" v-if="appData.spec?.addons?.length > 0">
-                    <h3>{{ $t('app.titles.addOns') }}</h3>
+                </section>
+
+                <section class="app-stats__section" v-if="appData.spec?.addons?.length > 0">
+                    <h2 class="app-stats__title">{{ $t('app.titles.addOns') }}</h2>
                     <Addons :addons="appData.spec.addons" :showButtons="false"/>
-                </div>
+                </section>
             </v-sheet>
             
         </v-row>
@@ -512,6 +522,140 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.app-stats {
+  padding: 0;
+}
+
+.app-stats__surface {
+  display: grid;
+  gap: 16px;
+}
+
+.app-stats__section {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--uct-corp-gray-border);
+  border-radius: 12px;
+  background: rgb(var(--v-theme-cardBackground));
+}
+
+.app-stats__title {
+  margin: 0 0 18px;
+  color: rgb(var(--v-theme-primary));
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+.app-stats__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.app-stats__section-header .app-stats__title {
+  margin: 0;
+}
+
+.app-stats__reveal {
+  flex: 0 0 auto;
+  min-height: 40px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.app-stats__table {
+  overflow: hidden;
+  border: 1px solid var(--uct-corp-gray-border);
+  border-radius: 8px;
+  background: transparent !important;
+}
+
+.app-stats__table :deep(th) {
+  height: 46px !important;
+  background: rgba(var(--v-theme-secondary), 0.52);
+  color: rgb(var(--v-theme-on-cardBackground));
+  font-size: 0.6875rem;
+  font-weight: 700 !important;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+}
+
+.app-stats__table :deep(td) {
+  height: 48px !important;
+  color: rgb(var(--v-theme-on-cardBackground));
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.app-stats__table :deep(tr:not(:last-child) > *) {
+  border-bottom-color: var(--uct-corp-gray-border) !important;
+}
+
+.app-stats__table--details :deep(th) {
+  width: 34%;
+  background: rgba(var(--v-theme-secondary), 0.36);
+}
+
+.app-stats__table--code :deep(td) {
+  font-family: var(--uct-font-mono);
+  font-size: 0.8125rem;
+}
+
+.app-stats__domains {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.app-stats__domains a {
+  border-radius: 3px;
+  color: rgb(var(--v-theme-primary));
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+.app-stats__domains a:hover {
+  text-decoration: underline;
+}
+
+.app-stats__domains a:focus-visible,
+.app-stats__reveal:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 3px;
+}
+
+.app-stats__metrics {
+  padding: 2px 4px 4px;
+}
+
+.app-stats__metrics--table {
+  overflow-x: auto;
+}
+
+.app-stats__metrics--table :deep(.v-row) {
+  min-width: 640px;
+}
+
+.app-stats__volume {
+  height: 100%;
+}
+
+.app-stats__volume :deep(.v-card-title) {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.app-stats__section :deep(.v-card) {
+  box-shadow: none;
+}
+
 #metrics:nth-child(even) {
   background-color: rgba(var(--v-theme-primary), .04);
 }
@@ -524,5 +668,24 @@ export default defineComponent({
 }
 .theme--dark#metrics:nth-child(odd) {
   background-color: rgba(var(--v-theme-primary), .12);
+}
+
+@media (max-width: 599px) {
+  .app-stats__section {
+    padding: 18px 16px;
+  }
+
+  .app-stats__section-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .app-stats__reveal {
+    width: 100%;
+  }
+
+  .app-stats__table--details :deep(th) {
+    width: 42%;
+  }
 }
 </style>
