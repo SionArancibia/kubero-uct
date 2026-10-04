@@ -401,6 +401,40 @@
                 ></v-select>
               </v-col>
             </v-row>
+
+            <v-row v-for="(annotation, index) in customIngressAnnotations" :key="index">
+              <v-col cols="12" md="5">
+                <v-text-field
+                  v-model="annotation.annotation"
+                  :label="$t('global.annotation')"
+                  :counter="120"
+                  :rules="[customIngressKeyError]"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <v-text-field
+                  v-model="annotation.value"
+                  :label="$t('global.value')"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="1">
+                <v-btn
+                  elevation="2"
+                  icon
+                  small
+                  @click="removeCustomIngressAnnotationLine(index)"
+                >
+                  <v-icon dark> mdi-minus </v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12">
+                <v-btn elevation="2" icon small @click="addCustomIngressAnnotationLine()">
+                  <v-icon dark> mdi-plus </v-icon>
+                </v-btn>
+              </v-col>
+            </v-row>
           </v-expansion-panel-text>
         </v-expansion-panel>
 
@@ -1151,6 +1185,25 @@ type Phase = {
   defaultEnvvars: EnvVar[];
 };
 
+const CUSTOM_INGRESS_KEY_PATTERN =
+  /^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\/)?[A-Za-z0-9]([-A-Za-z0-9_.]*[A-Za-z0-9])?$/;
+
+const MANAGED_INGRESS_ANNOTATIONS = [
+  "cert-manager.io/cluster-issuer",
+  "kubernetes.io/tls-acme",
+  "nginx.ingress.kubernetes.io/whitelist-source-range",
+  "nginx.ingress.kubernetes.io/denylist-source-range",
+  "nginx.ingress.kubernetes.io/force-ssl-redirect",
+  "nginx.ingress.kubernetes.io/proxy-buffer-size",
+  "nginx.ingress.kubernetes.io/enable-cors",
+  "nginx.ingress.kubernetes.io/cors-allow-origin",
+  "nginx.ingress.kubernetes.io/cors-allow-headers",
+  "nginx.ingress.kubernetes.io/cors-expose-headers",
+  "nginx.ingress.kubernetes.io/cors-allow-credentials",
+  "nginx.ingress.kubernetes.io/cors-max-age",
+  "nginx.ingress.kubernetes.io/cors-allow-methods",
+];
+
 export default defineComponent({
   props: {
     pipeline: {
@@ -1403,6 +1456,7 @@ export default defineComponent({
       serviceAccount: {
         annotations: {} as any,
       } as ServiceAccount,
+      customIngressAnnotations: [] as { annotation: string; value: string }[],
       ingress: {
         annotations: {
           "nginx.ingress.kubernetes.io/whitelist-source-range": "",
@@ -1888,6 +1942,14 @@ export default defineComponent({
               this.cronjobUnformat(response.data.spec.cronjobs) || [];
             this.addons = response.data.spec.addons || [];
             this.ingress = response.data.spec.ingress || {};
+            this.customIngressAnnotations = Object.entries(
+              this.ingress.annotations || {}
+            )
+              .filter(([key]) => !MANAGED_INGRESS_ANNOTATIONS.includes(key))
+              .map(([annotation, value]) => ({
+                annotation,
+                value: String(value),
+              }));
             this.healthcheck = response.data.spec.healthcheck || {
               enabled: true,
               path: "/",
@@ -2029,6 +2091,7 @@ export default defineComponent({
 
         this.setSSL();
         this.cleanupIngressAnnotations();
+        this.applyCustomIngressAnnotations();
 
         let command = [] as string[];
         if (this.docker.command.length > 0) {
@@ -2156,6 +2219,7 @@ export default defineComponent({
 
         this.setSSL();
         this.cleanupIngressAnnotations();
+        this.applyCustomIngressAnnotations();
 
         let postdata = {
           pipeline: this.pipeline,
@@ -2301,6 +2365,39 @@ export default defineComponent({
         annotation: "",
         value: "",
       });
+    },
+    addCustomIngressAnnotationLine() {
+      this.customIngressAnnotations.push({ annotation: "", value: "" });
+    },
+    removeCustomIngressAnnotationLine(index: number) {
+      this.customIngressAnnotations.splice(index, 1);
+    },
+    customIngressKeyError(key: string): string | true {
+      if (key.trim() === "") return true;
+      if (key.toLowerCase().includes("snippet")) {
+        return "Las anotaciones de snippet no están permitidas";
+      }
+      if (!CUSTOM_INGRESS_KEY_PATTERN.test(key.trim())) {
+        return "Formato de clave no válido (ej: nginx.ingress.kubernetes.io/limit-rps)";
+      }
+      return true;
+    },
+    applyCustomIngressAnnotations() {
+      const annotations = this.ingress.annotations as Record<string, string>;
+      Object.keys(annotations)
+        .filter((key) => !MANAGED_INGRESS_ANNOTATIONS.includes(key))
+        .forEach((key) => delete annotations[key]);
+      this.customIngressAnnotations
+        .map((row) => ({ annotation: row.annotation.trim(), value: row.value }))
+        .filter(
+          (row) =>
+            row.annotation !== "" &&
+            this.customIngressKeyError(row.annotation) === true &&
+            !MANAGED_INGRESS_ANNOTATIONS.includes(row.annotation)
+        )
+        .forEach((row) => {
+          annotations[row.annotation] = row.value;
+        });
     },
     removeSAAnnotationLine(index: string) {
       for (let i = 0; i < this.sAAnnotations.length; i++) {
