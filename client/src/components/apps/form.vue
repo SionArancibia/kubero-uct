@@ -1468,7 +1468,7 @@ export default defineComponent({
         "WAKE_ALARM",
       ],
       healthcheck: {
-        enabled: true,
+        enabled: false,
         path: "/",
         startupSeconds: 90,
         timeoutSeconds: 3,

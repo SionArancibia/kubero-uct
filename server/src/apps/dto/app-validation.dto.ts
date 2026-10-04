@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsBoolean,
   IsInt,
+  Matches,
   Min,
   Max,
   ValidateNested,
@@ -50,10 +51,10 @@ class ScalableComponentDto {
 
 class HealthcheckDto {
   @IsOptional() @IsBoolean() enabled?: boolean;
-  @IsOptional() @IsString() path?: string;
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0) periodSeconds?: number;
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0) startupSeconds?: number;
-  @IsOptional() @Type(() => Number) @IsInt() @Min(0) timeoutSeconds?: number;
+  @IsOptional() @IsString() @Matches(/^\//) path?: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) periodSeconds?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) startupSeconds?: number;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(1) timeoutSeconds?: number;
 }
 
 class ServiceDto {
