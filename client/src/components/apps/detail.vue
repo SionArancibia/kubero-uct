@@ -93,6 +93,7 @@
                 <v-tab prepend-icon="mdi-chart-line">{{ $t('app.nav.metrics') }}</v-tab>
                 <v-tab prepend-icon="mdi-text-box-search-outline" :disabled="!authStore.hasPermission('logs:ok')">{{ $t('app.nav.logs') }}</v-tab>
                 <v-tab prepend-icon="mdi-timeline-clock-outline">{{ $t('app.nav.events') }}</v-tab>
+                <v-tab prepend-icon="mdi-history">{{ $t('app.nav.audit') }}</v-tab>
             </v-tabs>
         </nav>
 
@@ -112,6 +113,9 @@
             <v-window-item :transition="false" :reverse-transition="false" class="background">
                 <Events :pipeline="pipeline" :phase="phase" :app="app"/>
             </v-window-item>
+            <v-window-item :transition="false" :reverse-transition="false" class="background">
+                <Audit :pipeline="pipeline" :phase="phase" :app="app"/>
+            </v-window-item>
         </v-window>
     </v-container>
 </template>
@@ -122,6 +126,7 @@ import { defineComponent } from 'vue'
 import Breadcrumbs from "../breadcrumbs.vue";
 import Overview from "./overview.vue";
 import Events from "./events.vue";
+import Audit from "./eventsAudit.vue";
 import LogsTab from "./logstab.vue";
 import Metrics from "./metrics.vue";
 import Builds from "./builds.vue";
@@ -264,6 +269,7 @@ export default defineComponent({
     components: {
         Breadcrumbs,
         Events,
+        Audit,
         LogsTab,
         Overview,
         Metrics,

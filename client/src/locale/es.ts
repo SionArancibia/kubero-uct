@@ -302,6 +302,7 @@ const messages = {
       metrics: 'Métricas',
       logs: 'Registros',
       events: 'Eventos',
+      audit: 'Audit',
     },
     actions: {
       name: 'Acciones',
