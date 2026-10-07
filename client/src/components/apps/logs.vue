@@ -10,9 +10,20 @@
             <v-tab v-if="logType == 'buildlogs' && (buildstrategy=='nixpacks' || buildstrategy=='dockerfile')" @click="getBuildLogHistory('push')">push</v-tab>
             <v-tab v-if="logType == 'buildlogs'" @click="getBuildLogHistory('deploy')">deploy</v-tab>
         </v-tabs>
+        <div v-if="currentTab == 'addons' && addonInstances.length > 0" class="addon-filter">
+            <v-select
+                v-model="selectedAddon"
+                :items="addonItems()"
+                :label="$t('app.actions.addonFilter')"
+                density="compact"
+                variant="outlined"
+                hide-details
+                class="pa-2"
+            ></v-select>
+        </div>
         <div class="console" id="console">
-            <div v-for="line in loglines" :key="line.id">
-            {{ new Date(line.time).toLocaleDateString() }} {{ new Date(line.time).toLocaleTimeString()}} <span :style="'color:' +line.color">[{{ line.podID }}/{{ line.container.replace('kuberoapp-', '') }}]</span>
+            <div v-for="line in visibleLines" :key="line.id">
+            {{ new Date(line.time).toLocaleDateString() }} {{ new Date(line.time).toLocaleTimeString()}} <span :style="'color:' +line.color">[{{ lineLabel(line) }}]</span>
             {{ line.log }}
             </div>
             <span style="margin: 25px;"></span>
@@ -23,7 +34,7 @@
 
 <script lang="ts">
 import axios from "axios";
-import { ref, reactive, defineComponent } from 'vue'
+import { ref, reactive, defineComponent, computed } from 'vue'
 import { useKuberoStore } from '../../stores/kubero'
 
 type LogLine = {
@@ -37,6 +48,11 @@ type LogLine = {
     podID: string;
     time: number;
     color: string;
+}
+
+type AddonInstance = {
+    name: string;
+    displayName: string;
 }
 
 const socket = useKuberoStore().kubero.socket as any;
@@ -53,11 +69,52 @@ socket.on('log', (data: LogLine) => {
 
 
 export default defineComponent({
-    setup() {
+    setup(props) {
+        // addon seleccionado en la pestaña addons ("all" = todos)
+        const selectedAddon = ref('all');
+        // la popup no recibe la lista de addons, así que se carga desde la app
+        const loadedAddons = ref([] as any[]);
+
+        // nombre de la instancia (prefijo de sus pods) y nombre a mostrar
+        const addonInstances = computed((): AddonInstance[] => {
+            const addons = props.addons.length > 0 ? props.addons : loadedAddons.value;
+            return addons.map((addon: any) => {
+                const crd = addon.resourceDefinitions?.[addon.kind]
+                    ?? Object.values(addon.resourceDefinitions || {}).find((r: any) => r?.kind !== 'Secret');
+                return {
+                    name: crd?.metadata?.name as string,
+                    displayName: (addon.displayName || addon.kind) as string,
+                };
+            }).filter((addon: AddonInstance) => !!addon.name);
+        });
+
+        // el addon con el prefijo más largo gana (evita que "app-pg" se confunda con "app-pg-2")
+        const addonForPod = (podName: string): AddonInstance | undefined => {
+            let match: AddonInstance | undefined;
+            for (const addon of addonInstances.value) {
+                if (podName.startsWith(addon.name + '-') && (!match || addon.name.length > match.name.length)) {
+                    match = addon;
+                }
+            }
+            return match;
+        };
+
+        const visibleLines = computed((): LogLine[] => {
+            if (currentTab.value != 'addons' || selectedAddon.value == 'all') {
+                return loglines.value;
+            }
+            return loglines.value.filter((line) => addonForPod(line.pod)?.name == selectedAddon.value);
+        });
+
         return {
             loglines,
             currentTab,
             socket,
+            selectedAddon,
+            loadedAddons,
+            addonInstances,
+            addonForPod,
+            visibleLines,
         }
     },
     mounted() {
@@ -66,6 +123,11 @@ export default defineComponent({
             //this.socketJoin()
             //this.startLogs()
         } else {
+            if (this.logType == 'runlogs' && this.hasAddons && this.addons.length == 0) {
+                axios.get(`/api/apps/${this.pipeline}/${this.phase}/${this.app}`).then((response) => {
+                    this.loadedAddons = response.data.spec.addons || [];
+                });
+            }
             this.getLogHistory('web')
             this.socketJoin()
             this.startLogs()
@@ -114,6 +176,10 @@ export default defineComponent({
         type: Boolean,
         default: false
       },
+      addons: {
+        type: Array,
+        default: () => []
+      },
     },
     data: () => ({
         loglines: [
@@ -133,6 +199,22 @@ export default defineComponent({
         ] as LogLine[],
     }),
     methods: {
+        addonItems() {
+            return [
+                { title: this.$t('app.actions.allAddons'), value: 'all' },
+                ...this.addonInstances.map((addon: AddonInstance) => ({ title: addon.displayName, value: addon.name })),
+            ];
+        },
+        lineLabel(line: LogLine) {
+            const addon = this.addonForPod(line.pod);
+            if (addon) {
+                return `${addon.displayName}/${line.container}`;
+            }
+            if (this.currentTab == 'addons') {
+                return `${line.pod.replace(this.app + '-', '')}/${line.container}`;
+            }
+            return `${line.podID}/${line.container.replace('kuberoapp-', '')}`;
+        },
         socketJoin() {
             console.log("socketJoin", `${this.pipeline}-${this.phase}-${this.app}`);
             socket.emit("join", {

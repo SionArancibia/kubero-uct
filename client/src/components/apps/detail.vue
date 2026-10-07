@@ -107,7 +107,7 @@
                 <Metrics :pipeline="pipeline" :phase="phase" :app="app" :host="appData.spec.ingress.hosts[0].host" :active="tab == 2"/>
             </v-window-item>
             <v-window-item :transition="false" :reverse-transition="false" class="background">
-                <LogsTab :pipeline="pipeline" :phase="phase" :app="app" :deploymentstrategy="appData.spec.deploymentstrategy" :buildstrategy="appData.spec.buildstrategy" :hasAddons="(appData.spec.addons?.length ?? 0) > 0"/>
+                <LogsTab :pipeline="pipeline" :phase="phase" :app="app" :deploymentstrategy="appData.spec.deploymentstrategy" :buildstrategy="appData.spec.buildstrategy" :hasAddons="(appData.spec.addons?.length ?? 0) > 0" :addons="appData.spec.addons ?? []"/>
             </v-window-item>
             <v-window-item :transition="false" :reverse-transition="false" class="background">
                 <Events :pipeline="pipeline" :phase="phase" :app="app"/>
