@@ -310,6 +310,8 @@ const messages = {
       restart: 'Reiniciar',
       openConsole: 'Abrir Consola',
       openLogs: 'Abrir Registros',
+      addonFilter: 'Addon',
+      allAddons: 'Todos',
       downloadTemplate: 'Descargar Plantilla',
       delete: 'Eliminar',
       update: 'Actualizar',
