@@ -22,7 +22,7 @@ export class UsersService {
   private readonly prisma = new PrismaClient();
   private logger = new Logger(UsersService.name);
 
-  constructor() {}
+  constructor() { }
 
   async findOne(username: string): Promise<PrismaUser | null> {
     return this.prisma.user.findUnique({ where: { username } });
@@ -267,8 +267,8 @@ export class UsersService {
         userGroups:
           userGroups && Array.isArray(userGroups)
             ? {
-                connect: userGroups.map((g: any) => ({ id: g })),
-              }
+              connect: userGroups.map((g: any) => ({ id: g }))
+            }
             : undefined,
       },
     });
