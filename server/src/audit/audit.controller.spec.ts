@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuditController } from './audit.controller';
 import { AuditService } from './audit.service';
@@ -43,20 +43,47 @@ describe('AuditController', () => {
   describe('getAuditAll', () => {
     it('should give the admin team the whole audit log', async () => {
       await controller.getAuditAll(100, reqOf(['admin']));
-      expect(audit.get).toHaveBeenCalledWith(100);
+      expect(audit.get).toHaveBeenCalledWith(100, undefined, {});
       expect(pipelines.listPipelines).not.toHaveBeenCalled();
     });
 
     it('should restrict any other team to the pipelines it can access', async () => {
       await controller.getAuditAll(100, reqOf(['Taller1']));
       expect(pipelines.listPipelines).toHaveBeenCalledWith(['Taller1']);
-      expect(audit.get).toHaveBeenCalledWith(100, ['taller1-a', 'taller1-b']);
+      expect(audit.get).toHaveBeenCalledWith(
+        100,
+        ['taller1-a', 'taller1-b'],
+        {},
+      );
     });
 
     it('should not fall back to the whole log when the user has no teams', async () => {
       pipelines.listPipelines.mockResolvedValue({ items: [] });
       await controller.getAuditAll(100, { user: {} });
-      expect(audit.get).toHaveBeenCalledWith(100, []);
+      expect(audit.get).toHaveBeenCalledWith(100, [], {});
+    });
+
+    it('passes filters alongside access restrictions, never replacing them', async () => {
+      const filters = { pipeline: 'other-team', page: 2, action: 'delete' };
+      await controller.getAuditAll(20, reqOf(['Taller1']), filters);
+      expect(audit.get).toHaveBeenCalledWith(
+        20,
+        ['taller1-a', 'taller1-b'],
+        filters,
+      );
+    });
+
+    it('rejects excessive page sizes and reversed date ranges', async () => {
+      await expect(
+        controller.getAuditAll(101, reqOf(['admin'])),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.getAuditAll(20, reqOf(['admin']), {
+          from: '2026-10-10T00:00:00Z',
+          to: '2026-10-09T00:00:00Z',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(audit.get).not.toHaveBeenCalled();
     });
   });
 

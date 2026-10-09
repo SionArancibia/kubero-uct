@@ -1,6 +1,30 @@
 import { es } from 'vuetify/locale'
 
 const messages = {
+  activity: {
+    description: 'Filtra el registro de auditoría para encontrar la actividad relevante.',
+    refresh: 'Actualizar',
+    pipelineHint: 'Nombre exacto del pipeline',
+    action: 'Acción',
+    user: 'Usuario',
+    from: 'Desde',
+    to: 'Hasta',
+    apply: 'Aplicar filtros',
+    clear: 'Limpiar filtros',
+    count: '{count} eventos encontrados',
+    date: 'Fecha',
+    details: 'Detalles',
+    system: 'Sistema',
+    pageSize: 'Filas por página',
+    pages: 'Páginas de actividad',
+    range: '{start}–{end} de {count}',
+    loading: 'Cargando actividad',
+    empty: 'No hay eventos que coincidan con estos filtros.',
+    disabled: 'El registro de auditoría está desactivado en esta instalación.',
+    forbidden: 'No tienes permiso para consultar esta actividad.',
+    error: 'No se pudo cargar la actividad. Comprueba la conexión y pulsa Actualizar.',
+    invalidDates: 'La fecha inicial no puede ser posterior a la fecha final.',
+  },
   navigation: {
     aboutKubero: 'Acerca de Kubero',
     pipelines: 'Pipelines',

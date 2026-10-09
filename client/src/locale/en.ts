@@ -1,6 +1,30 @@
 import { en } from 'vuetify/locale'
 
 const messages = {
+  activity: {
+    description: 'Filter the audit log to find relevant activity.',
+    refresh: 'Refresh',
+    pipelineHint: 'Exact pipeline name',
+    action: 'Action',
+    user: 'User',
+    from: 'From',
+    to: 'To',
+    apply: 'Apply filters',
+    clear: 'Clear filters',
+    count: '{count} matching events',
+    date: 'Date',
+    details: 'Details',
+    system: 'System',
+    pageSize: 'Rows per page',
+    pages: 'Activity pages',
+    range: '{start}–{end} of {count}',
+    loading: 'Loading activity',
+    empty: 'No events match these filters.',
+    disabled: 'Audit logging is disabled for this installation.',
+    forbidden: 'You do not have permission to view this activity.',
+    error: 'Activity could not be loaded. Check the connection and try Refresh.',
+    invalidDates: 'The start date must not be later than the end date.',
+  },
       navigation: {
     aboutKubero: 'About Kubero',
         pipelines: 'Pipelines',

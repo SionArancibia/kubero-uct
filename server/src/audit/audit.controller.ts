@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   DefaultValuePipe,
   Get,
@@ -19,6 +20,7 @@ import { OKDTO } from '../common/dto/ok.dto';
 import { JwtAuthGuard } from '../auth/strategies/jwt.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { Permissions } from '../auth/permissions.decorator';
+import { AuditQueryDto } from './audit-query.dto';
 
 @Controller({ path: 'api/audit', version: '1' })
 export class AuditController {
@@ -76,18 +78,30 @@ export class AuditController {
     )
     limit: number,
     @Request() req: any,
+    @Query() filters: AuditQueryDto = {},
   ) {
+    if (limit < 1 || limit > 100) {
+      throw new BadRequestException('Limit must be between 1 and 100');
+    }
+    if (
+      filters.from &&
+      filters.to &&
+      new Date(filters.from) >= new Date(filters.to)
+    ) {
+      throw new BadRequestException('Start date must precede end date');
+    }
     // El equipo admin ve todo el registro (incluye eventos de sistema sin
     // pipeline). El resto solo ve lo de los pipelines a los que tiene acceso:
     // antes cualquier usuario con audit:read veía la auditoría de todos.
     const userGroups: string[] = req.user.userGroups ?? [];
     if (userGroups.includes('admin')) {
-      return this.auditService.get(limit);
+      return this.auditService.get(limit, undefined, filters);
     }
     const accessible = await this.pipelinesService.listPipelines(userGroups);
     return this.auditService.get(
       limit,
       accessible.items.map((p) => p.name),
+      filters,
     );
   }
 }
