@@ -5,13 +5,14 @@
         <h1 class="uct-h1">{{ $t('navigation.activity') }}</h1>
         <p>{{ $t('activity.description') }}</p>
       </div>
-      <v-btn prepend-icon="mdi-refresh" variant="tonal" color="primary" :loading="loading" @click="loadAudit">{{ $t('activity.refresh') }}</v-btn>
+      <v-btn class="activity-button" prepend-icon="mdi-refresh" variant="tonal" color="primary" :loading="loading" @click="loadAudit">{{ $t('activity.refresh') }}</v-btn>
     </header>
 
     <section class="pipeline-panel">
-      <form class="pipeline-toolbar" @submit.prevent="applyFilters">
+      <form class="pipeline-toolbar activity-toolbar" @submit.prevent="applyFilters">
         <v-combobox
           v-model="filters.pipeline"
+          class="activity-pipeline-filter"
           :items="pipelineSuggestions.items"
           :loading="pipelineSuggestions.loading"
           :error-messages="pipelineSuggestions.error"
@@ -38,8 +39,8 @@
         <v-text-field v-model="filters.from" type="date" :label="$t('activity.from')" variant="outlined" density="compact" hide-details />
         <v-text-field v-model="filters.to" type="date" :label="$t('activity.to')" variant="outlined" density="compact" hide-details />
         <div class="activity-filter-actions">
-          <v-btn type="submit" color="primary" elevation="0" :disabled="loading">{{ $t('activity.apply') }}</v-btn>
-          <v-btn variant="text" color="primary" prepend-icon="mdi-filter-remove-outline" :disabled="loading" @click="resetFilters">{{ $t('activity.clear') }}</v-btn>
+          <v-btn v-if="hasClearableFilters" class="activity-button" variant="text" color="primary" prepend-icon="mdi-filter-remove-outline" :disabled="loading" @click="resetFilters">{{ $t('activity.clear') }}</v-btn>
+          <v-btn class="activity-button" type="submit" color="primary" elevation="0" :disabled="loading">{{ $t('activity.apply') }}</v-btn>
         </div>
       </form>
 
@@ -110,7 +111,8 @@ const { smAndDown } = useDisplay()
 const emptyFilters = () => ({ pipeline: '', action: '', username: '', from: '', to: '' })
 const filters = reactive(emptyFilters())
 const appliedFilters = ref(emptyFilters())
-const hasActiveFilters = computed(() => Object.values(appliedFilters.value).some(Boolean))
+const hasActiveFilters = computed(() => Object.values(appliedFilters.value).some(value => Boolean(value?.trim())))
+const hasClearableFilters = computed(() => hasActiveFilters.value || Object.values(filters).some(value => Boolean(value?.trim())))
 const pipelineSearch = ref('')
 const usernameSearch = ref('')
 const pipelineSuggestions = useAuditSuggestions('pipeline', () => pipelineSearch.value)
@@ -199,10 +201,20 @@ onBeforeUnmount(() => request?.abort())
 
 <style scoped src="../../styles/resource-list.css"></style>
 <style scoped>
-.activity-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.activity-toolbar { grid-template-columns: minmax(220px, 1.4fr) repeat(4, minmax(150px, 1fr)); align-items: start; }
+.activity-filter-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 12px; }
+.activity-button { min-width: 180px; height: 40px; border-radius: 8px; }
 .activity-table :deep(td) { overflow-wrap: anywhere; }
 .activity-table :deep(td:last-child) { min-width: 240px; }
 .activity-table time { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .activity-identity { display: flex; min-width: 220px; gap: 11px; align-items: flex-start; }
 .activity-identity strong { font-size: .875rem; font-weight: 600; }
+@media (max-width: 1100px) {
+  .activity-toolbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .activity-pipeline-filter { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .activity-toolbar { grid-template-columns: minmax(0, 1fr); }
+  .activity-filter-actions .activity-button { flex: 1 1 180px; }
+}
 </style>
