@@ -21,6 +21,7 @@ import { JwtAuthGuard } from '../auth/strategies/jwt.guard';
 import { PermissionsGuard } from '../auth/permissions.guard';
 import { Permissions } from '../auth/permissions.decorator';
 import { AuditQueryDto } from './audit-query.dto';
+import { AuditSuggestionsDto } from './audit-suggestions.dto';
 
 @Controller({ path: 'api/audit', version: '1' })
 export class AuditController {
@@ -28,6 +29,26 @@ export class AuditController {
     private readonly auditService: AuditService,
     private readonly pipelinesService: PipelinesService,
   ) {}
+
+  @Get('/suggestions')
+  @UseGuards(JwtAuthGuard, PermissionsGuard)
+  @Permissions('audit:read', 'audit:write')
+  @ApiBearerAuth('bearerAuth')
+  @ApiOperation({ summary: 'Suggest names from authorized audit entries only' })
+  async getSuggestions(
+    @Query() query: AuditSuggestionsDto,
+    @Request() req: any,
+  ) {
+    const groups: string[] = req.user.userGroups ?? [];
+    if (groups.includes('admin')) {
+      return this.auditService.getSuggestions(query);
+    }
+    const accessible = await this.pipelinesService.listPipelines(groups);
+    return this.auditService.getSuggestions(
+      query,
+      accessible.items.map((p) => p.name),
+    );
+  }
 
   @ApiOperation({ summary: 'Get all audit entries for a specific app' })
   @Get('/app/:pipeline/:phase/:app')

@@ -3,6 +3,7 @@ import { AuditEntry } from './audit.interface';
 import { Logger } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { AuditQueryDto } from './audit-query.dto';
+import { AuditSuggestionsDto } from './audit-suggestions.dto';
 
 @Injectable()
 export class AuditService {
@@ -129,6 +130,43 @@ export class AuditService {
     });
     const count = await this.prisma.audit.count({ where });
     return { audit, count, limit, page, enabled: true };
+  }
+
+  public async getSuggestions(
+    query: AuditSuggestionsDto,
+    pipelines?: string[],
+  ): Promise<string[]> {
+    if (!this.enabled) return [];
+    const access: Prisma.AuditWhereInput[] = pipelines
+      ? [{ pipeline: { in: pipelines } }]
+      : [];
+    const search = query.q?.trim() ?? '';
+    if (query.kind === 'pipeline') {
+      const rows = await this.prisma.audit.findMany({
+        where: {
+          AND: [...access, { pipeline: { not: '', contains: search } }],
+        },
+        select: { pipeline: true },
+        distinct: ['pipeline'],
+        orderBy: { pipeline: 'asc' },
+        take: 20,
+      });
+      return rows.map((row) => row.pipeline);
+    }
+    const rows = await this.prisma.audit.findMany({
+      where: {
+        AND: [
+          ...access,
+          ...(query.pipeline ? [{ pipeline: query.pipeline }] : []),
+        ],
+        users: { username: { contains: search } },
+      },
+      select: { users: { select: { username: true } } },
+      distinct: ['user'],
+      orderBy: { users: { username: 'asc' } },
+      take: 20,
+    });
+    return rows.map((row) => row.users.username);
   }
 
   public async getFiltered(

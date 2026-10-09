@@ -82,6 +82,56 @@ describe('AuditService', () => {
     });
   });
 
+  it('suggests only distinct pipeline names from authorized entries, capped at 20', async () => {
+    mockPrisma.audit.findMany = jest
+      .fn()
+      .mockResolvedValue([{ pipeline: 'allowed' }]);
+    expect(
+      await service.getSuggestions({ kind: 'pipeline', q: 'allow' }, [
+        'allowed',
+      ]),
+    ).toEqual(['allowed']);
+    expect(mockPrisma.audit.findMany).toHaveBeenCalledWith({
+      where: {
+        AND: [
+          { pipeline: { in: ['allowed'] } },
+          { pipeline: { not: '', contains: 'allow' } },
+        ],
+      },
+      select: { pipeline: true },
+      distinct: ['pipeline'],
+      orderBy: { pipeline: 'asc' },
+      take: 20,
+    });
+  });
+
+  it('does not expose account data or usernames outside the authorized pipeline scope', async () => {
+    mockPrisma.audit.findMany = jest.fn().mockResolvedValue([]);
+    expect(
+      await service.getSuggestions(
+        { kind: 'username', q: 'admin', pipeline: 'other-team' },
+        ['allowed'],
+      ),
+    ).toEqual([]);
+    expect(mockPrisma.audit.findMany).toHaveBeenCalledWith({
+      where: {
+        AND: [{ pipeline: { in: ['allowed'] } }, { pipeline: 'other-team' }],
+        users: { username: { contains: 'admin' } },
+      },
+      select: { users: { select: { username: true } } },
+      distinct: ['user'],
+      orderBy: { users: { username: 'asc' } },
+      take: 20,
+    });
+  });
+
+  it('does not query suggestions when auditing is disabled', async () => {
+    service['enabled'] = false;
+    mockPrisma.audit.findMany = jest.fn();
+    expect(await service.getSuggestions({ kind: 'username' })).toEqual([]);
+    expect(mockPrisma.audit.findMany).not.toHaveBeenCalled();
+  });
+
   it('returns an explicit disabled state without querying the database', async () => {
     service['enabled'] = false;
     mockPrisma.audit.findMany = jest.fn();

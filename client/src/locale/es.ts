@@ -5,6 +5,8 @@ const messages = {
     description: 'Filtra el registro de auditoría para encontrar la actividad relevante.',
     refresh: 'Actualizar',
     pipelineHint: 'Nombre exacto del pipeline',
+    noSuggestions: 'No hay coincidencias en la actividad disponible.',
+    suggestionsError: 'No se pudieron cargar las sugerencias. Puedes escribir el nombre manualmente.',
     action: 'Acción',
     user: 'Usuario',
     from: 'Desde',

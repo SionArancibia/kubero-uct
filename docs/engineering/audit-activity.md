@@ -12,6 +12,19 @@ usa la zona horaria del navegador e incluye todo el día final seleccionado.
 Los filtros se aplican con «Aplicar filtros»; cambiar de página conserva los
 criterios aplicados. «Actualizar» vuelve a consultar la página actual.
 
+Actividad y Pipelines comparten `client/src/styles/resource-list.css` para
+mantener idénticos el panel, encabezados, filas, estados vacíos y paginación.
+Los campos pipeline y usuario sugieren nombres mientras se escribe, con una
+espera de 250 ms y cancelación de consultas anteriores. Se permite escribir
+manualmente si no hay sugerencias o si la consulta falla.
+
+`GET /api/audit/suggestions` acepta `kind` (`pipeline` o `username`), `q` y
+`pipeline` (opcional, para acotar usuarios). Devuelve hasta 20 nombres distintos
+que ya aparecen en registros de auditoría accesibles. Requiere `audit:read`
+o `audit:write` y aplica el mismo alcance por equipos que la lista de actividad;
+no concede acceso al directorio de cuentas ni expone correos o perfiles. Un
+pipeline eliminado puede aparecer para el equipo admin si conserva actividad.
+
 `GET /api/audit` conserva `audit`, `count` y `limit`, y añade `page` y `enabled`.
 Acepta `limit` (1–100), `page` (desde 1), `pipeline`, `action`, `username`, `from`
 y `to` (ISO 8601; límite final exclusivo). El servidor filtra y cuenta antes de

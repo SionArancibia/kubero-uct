@@ -1,6 +1,6 @@
 <template>
-  <v-container class="activity-page">
-    <header class="activity-header">
+  <v-container class="pipelines-page" fluid>
+    <header class="pipelines-header">
       <div>
         <h1 class="uct-h1">{{ $t('navigation.activity') }}</h1>
         <p>{{ $t('activity.description') }}</p>
@@ -8,47 +8,82 @@
       <v-btn prepend-icon="mdi-refresh" variant="tonal" color="primary" :loading="loading" @click="loadAudit">{{ $t('activity.refresh') }}</v-btn>
     </header>
 
-    <v-card class="uct-card" color="cardBackground" elevation="0">
-      <form class="activity-filters" @submit.prevent="applyFilters">
-        <v-text-field v-model="filters.pipeline" :label="$t('navigation.pipelines')" :hint="$t('activity.pipelineHint')" variant="outlined" density="comfortable" clearable hide-details="auto" />
-        <v-combobox v-model="filters.action" :items="actions" :label="$t('activity.action')" variant="outlined" density="comfortable" clearable hide-details />
-        <v-text-field v-model="filters.username" :label="$t('activity.user')" variant="outlined" density="comfortable" clearable hide-details />
-        <v-text-field v-model="filters.from" type="date" :label="$t('activity.from')" variant="outlined" density="comfortable" hide-details />
-        <v-text-field v-model="filters.to" type="date" :label="$t('activity.to')" variant="outlined" density="comfortable" hide-details />
+    <section class="pipeline-panel">
+      <form class="pipeline-toolbar" @submit.prevent="applyFilters">
+        <v-combobox
+          v-model="filters.pipeline"
+          :items="pipelineSuggestions.items"
+          :loading="pipelineSuggestions.loading"
+          :error-messages="pipelineSuggestions.error"
+          :no-data-text="$t(pipelineSuggestions.loading ? 'activity.loading' : 'activity.noSuggestions')"
+          :hide-no-data="false"
+          :label="$t('navigation.pipelines')"
+          variant="outlined" density="compact" prepend-inner-icon="mdi-magnify"
+          clearable hide-details="auto" no-filter
+          @update:search="pipelineSearch = $event"
+        />
+        <v-combobox v-model="filters.action" :items="actions" :label="$t('activity.action')" variant="outlined" density="compact" clearable hide-details />
+        <v-combobox
+          v-model="filters.username"
+          :items="usernameSuggestions.items"
+          :loading="usernameSuggestions.loading"
+          :error-messages="usernameSuggestions.error"
+          :no-data-text="$t(usernameSuggestions.loading ? 'activity.loading' : 'activity.noSuggestions')"
+          :hide-no-data="false"
+          :label="$t('activity.user')"
+          variant="outlined" density="compact"
+          clearable hide-details="auto" no-filter
+          @update:search="usernameSearch = $event"
+        />
+        <v-text-field v-model="filters.from" type="date" :label="$t('activity.from')" variant="outlined" density="compact" hide-details />
+        <v-text-field v-model="filters.to" type="date" :label="$t('activity.to')" variant="outlined" density="compact" hide-details />
         <div class="activity-filter-actions">
           <v-btn type="submit" color="primary" elevation="0" :disabled="loading">{{ $t('activity.apply') }}</v-btn>
-          <v-btn variant="text" :disabled="loading" @click="resetFilters">{{ $t('activity.clear') }}</v-btn>
+          <v-btn variant="text" color="primary" prepend-icon="mdi-filter-remove-outline" :disabled="loading" @click="resetFilters">{{ $t('activity.clear') }}</v-btn>
         </div>
       </form>
 
       <v-alert v-if="error" type="error" variant="tonal" class="ma-4" role="alert">{{ error }}</v-alert>
       <v-alert v-else-if="!enabled" type="info" variant="tonal" class="ma-4">{{ $t('activity.disabled') }}</v-alert>
-      <div class="activity-summary" role="status" aria-live="polite">{{ $t('activity.count', { count }) }}</div>
+      <div class="table-summary" role="status" aria-live="polite">
+        <span>{{ $t('activity.count', { count }) }}</span>
+        <v-chip v-if="hasActiveFilters" size="small" variant="tonal" color="primary" label>{{ $t('pipeline.list.filtered') }}</v-chip>
+      </div>
       <v-progress-linear v-if="loading" indeterminate color="primary" :aria-label="$t('activity.loading')" />
 
-      <v-table v-if="!error && enabled" class="activity-table" :aria-busy="loading" :aria-label="$t('navigation.activity')">
+      <div v-if="!error && enabled" class="pipeline-table-wrap" role="region" tabindex="0" :aria-label="$t('navigation.activity')">
+      <v-table class="pipeline-table activity-table" :aria-busy="loading">
         <thead><tr>
           <th>{{ $t('activity.date') }}</th><th>{{ $t('activity.user') }}</th><th>{{ $t('navigation.pipelines') }}</th><th>{{ $t('activity.action') }}</th><th>{{ $t('activity.details') }}</th>
         </tr></thead>
         <tbody>
-          <tr v-if="loading"><td colspan="5"><v-skeleton-loader type="table-row@5" /></td></tr>
-          <tr v-else-if="auditEvents.length === 0"><td colspan="5" class="activity-empty">{{ $t('activity.empty') }}</td></tr>
+          <template v-if="loading">
+            <tr v-for="index in 6" :key="`audit-skeleton-${index}`"><td colspan="5"><v-skeleton-loader type="list-item" /></td></tr>
+          </template>
+          <tr v-else-if="auditEvents.length === 0"><td colspan="5">
+            <div class="empty-state">
+              <v-icon icon="mdi-filter-off-outline" size="38" color="primary" aria-hidden="true" />
+              <h2>{{ $t('activity.empty') }}</h2>
+              <v-btn v-if="hasActiveFilters" color="primary" variant="outlined" @click="resetFilters">{{ $t('activity.clear') }}</v-btn>
+            </div>
+          </td></tr>
           <tr v-for="event in loading ? [] : auditEvents" :key="event.id">
             <td><time :datetime="event.timestamp">{{ formatDate(event.timestamp) }}</time></td>
             <td>{{ event.users?.username || $t('activity.system') }}</td>
-            <td><strong>{{ event.pipeline || $t('activity.system') }}</strong><div class="text-caption">{{ [event.phase, event.app].filter(Boolean).join(' / ') }}</div></td>
-            <td><v-chip size="small" variant="tonal" :color="event.action === 'delete' ? 'error' : 'primary'">{{ event.action }}</v-chip><div class="text-caption">{{ event.resource }}</div></td>
+            <td><div class="activity-identity"><v-icon :icon="event.pipeline ? 'mdi-source-branch' : 'mdi-cog-outline'" color="primary" size="21" aria-hidden="true" /><div><strong>{{ event.pipeline || $t('activity.system') }}</strong><div class="text-caption">{{ [event.phase, event.app].filter(Boolean).join(' / ') }}</div></div></div></td>
+            <td><v-chip size="small" variant="tonal" label :color="event.action === 'delete' ? 'error' : 'primary'">{{ event.action }}</v-chip><div class="text-caption">{{ event.resource }}</div></td>
             <td>{{ event.message }}</td>
           </tr>
         </tbody>
       </v-table>
+      </div>
 
-      <footer class="activity-footer">
-        <v-select v-model="limit" :items="[20, 50, 100]" :label="$t('activity.pageSize')" variant="outlined" density="compact" hide-details :disabled="loading" @update:model-value="changePageSize" />
-        <v-pagination v-model="page" :length="pageCount" :total-visible="5" :disabled="loading || !!error || !enabled" :aria-label="$t('activity.pages')" @update:model-value="loadAudit" />
-        <span role="status">{{ $t('activity.range', { start: count ? (page - 1) * limit + 1 : 0, end: Math.min(page * limit, count), count }) }}</span>
+      <footer v-if="!loading && !error && enabled && count > 0" class="table-footer">
+        <div class="page-size"><span>{{ $t('activity.pageSize') }}</span><v-select v-model="limit" :items="[20, 50, 100]" :aria-label="$t('activity.pageSize')" variant="outlined" density="compact" hide-details @update:model-value="changePageSize" /></div>
+        <v-pagination v-model="page" :length="pageCount" :total-visible="smAndDown ? 3 : 5" density="comfortable" :aria-label="$t('activity.pages')" @update:model-value="loadAudit" />
+        <span class="page-range" role="status">{{ $t('activity.range', { start: count ? (page - 1) * limit + 1 : 0, end: Math.min(page * limit, count), count }) }}</span>
       </footer>
-    </v-card>
+    </section>
   </v-container>
 </template>
 
@@ -56,6 +91,8 @@
 import axios from 'axios'
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useDisplay } from 'vuetify'
+import { useAuditSuggestions } from '../../composables/useAuditSuggestions'
 
 type AuditEvent = {
   id: number
@@ -69,9 +106,15 @@ type AuditEvent = {
   users?: { username: string }
 }
 const { t, locale } = useI18n()
+const { smAndDown } = useDisplay()
 const emptyFilters = () => ({ pipeline: '', action: '', username: '', from: '', to: '' })
 const filters = reactive(emptyFilters())
 const appliedFilters = ref(emptyFilters())
+const hasActiveFilters = computed(() => Object.values(appliedFilters.value).some(Boolean))
+const pipelineSearch = ref('')
+const usernameSearch = ref('')
+const pipelineSuggestions = useAuditSuggestions('pipeline', () => pipelineSearch.value)
+const usernameSuggestions = useAuditSuggestions('username', () => usernameSearch.value, () => filters.pipeline)
 const actions = ['create', 'update', 'delete', 'start', 'stop', 'restart', 'scale', 'rollback', 'promote', 'demote', 'approve', 'reject', 'pause', 'resume', 'deploy', 'undeploy', 'release']
 const auditEvents = ref<AuditEvent[]>([])
 const loading = ref(false)
@@ -136,6 +179,8 @@ function applyFilters() {
 
 function resetFilters() {
   Object.assign(filters, emptyFilters())
+  pipelineSearch.value = ''
+  usernameSearch.value = ''
   applyFilters()
 }
 
@@ -152,23 +197,12 @@ onMounted(loadAudit)
 onBeforeUnmount(() => request?.abort())
 </script>
 
+<style scoped src="../../styles/resource-list.css"></style>
 <style scoped>
-.activity-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
-.activity-header p { margin: 8px 0 0; font-size: .875rem; }
-.activity-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 16px; padding: 24px; }
 .activity-filter-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.activity-summary { padding: 12px 24px; border-block: 1px solid var(--uct-corp-gray-border); font-size: .875rem; }
-.activity-table { background: transparent; }
-.activity-table :deep(th) { font-size: .75rem; font-weight: 600; }
-.activity-table :deep(td) { padding-block: 12px; vertical-align: top; font-size: .875rem; overflow-wrap: anywhere; }
+.activity-table :deep(td) { overflow-wrap: anywhere; }
 .activity-table :deep(td:last-child) { min-width: 240px; }
 .activity-table time { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.activity-empty { text-align: center; padding: 40px !important; }
-.activity-footer { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px 24px; border-top: 1px solid var(--uct-corp-gray-border); font-size: .8125rem; }
-.activity-footer .v-select { flex: 0 0 170px; }
-@media (max-width: 700px) {
-  .activity-header { align-items: flex-start; flex-direction: column; }
-  .activity-filters { grid-template-columns: 1fr; padding: 16px; }
-  .activity-footer { justify-content: center; padding: 16px; }
-}
+.activity-identity { display: flex; min-width: 220px; gap: 11px; align-items: flex-start; }
+.activity-identity strong { font-size: .875rem; font-weight: 600; }
 </style>

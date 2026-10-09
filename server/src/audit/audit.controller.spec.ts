@@ -6,13 +6,18 @@ import { PipelinesService } from '../pipelines/pipelines.service';
 
 describe('AuditController', () => {
   let controller: AuditController;
-  let audit: { get: jest.Mock; getAppEntries: jest.Mock };
+  let audit: {
+    get: jest.Mock;
+    getAppEntries: jest.Mock;
+    getSuggestions: jest.Mock;
+  };
   let pipelines: { getContext: jest.Mock; listPipelines: jest.Mock };
 
   const reqOf = (userGroups: string[]) => ({ user: { userGroups } });
 
   beforeEach(async () => {
     audit = {
+      getSuggestions: jest.fn().mockResolvedValue(['visible']),
       get: jest.fn().mockResolvedValue({ audit: [], count: 0, limit: 100 }),
       getAppEntries: jest
         .fn()
@@ -38,6 +43,45 @@ describe('AuditController', () => {
 
   it('should be defined', () => {
     expect(controller).toBeDefined();
+  });
+
+  describe('getSuggestions', () => {
+    it('lets admin search all audit names', async () => {
+      const query = { kind: 'pipeline' as const, q: 'vis' };
+      expect(await controller.getSuggestions(query, reqOf(['admin']))).toEqual([
+        'visible',
+      ]);
+      expect(audit.getSuggestions).toHaveBeenCalledWith(query);
+      expect(pipelines.listPipelines).not.toHaveBeenCalled();
+    });
+
+    it('restricts username suggestions to authorized pipelines, including when another pipeline is requested', async () => {
+      const query = {
+        kind: 'username' as const,
+        pipeline: 'other-team',
+        q: 'admin',
+      };
+      await controller.getSuggestions(query, reqOf(['Taller1']));
+      expect(audit.getSuggestions).toHaveBeenCalledWith(query, [
+        'taller1-a',
+        'taller1-b',
+      ]);
+    });
+
+    it('never returns global suggestions for a user with no accessible pipelines', async () => {
+      pipelines.listPipelines.mockResolvedValue({ items: [] });
+      const query = { kind: 'username' as const };
+      await controller.getSuggestions(query, { user: {} });
+      expect(audit.getSuggestions).toHaveBeenCalledWith(query, []);
+    });
+
+    it('does not query names when determining pipeline access fails', async () => {
+      pipelines.listPipelines.mockRejectedValue(new ForbiddenException());
+      await expect(
+        controller.getSuggestions({ kind: 'pipeline' }, reqOf(['Taller1'])),
+      ).rejects.toThrow(ForbiddenException);
+      expect(audit.getSuggestions).not.toHaveBeenCalled();
+    });
   });
 
   describe('getAuditAll', () => {

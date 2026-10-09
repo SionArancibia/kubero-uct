@@ -5,6 +5,8 @@ const messages = {
     description: 'Filter the audit log to find relevant activity.',
     refresh: 'Refresh',
     pipelineHint: 'Exact pipeline name',
+    noSuggestions: 'No matches in the available activity.',
+    suggestionsError: 'Suggestions could not be loaded. You can enter the name manually.',
     action: 'Action',
     user: 'User',
     from: 'From',
