@@ -20,7 +20,7 @@
           :hide-no-data="false"
           :label="$t('navigation.pipelines')"
           variant="outlined" density="compact" prepend-inner-icon="mdi-magnify"
-          clearable hide-details="auto" no-filter
+          clearable hide-details="auto"
           @update:search="pipelineSearch = $event"
         />
         <v-combobox v-model="filters.action" :items="actions" :label="$t('activity.action')" variant="outlined" density="compact" clearable hide-details />
@@ -33,7 +33,7 @@
           :hide-no-data="false"
           :label="$t('activity.user')"
           variant="outlined" density="compact"
-          clearable hide-details="auto" no-filter
+          clearable hide-details="auto"
           @update:search="usernameSearch = $event"
         />
         <v-text-field v-model="filters.from" type="date" :label="$t('activity.from')" variant="outlined" density="compact" hide-details />
