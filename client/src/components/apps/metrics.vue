@@ -57,7 +57,7 @@
         <v-row>
             <v-col cols="12" sm="12" md="12">
                 Memory Usage
-                <VueApexCharts :key="'memory-' + scale + '-' + timezone" type="area" height="180" :options="memoryOptions" :series="memoryData"></VueApexCharts>
+                <VueApexCharts :key="'memory-' + scale + '-' + timezone + '-' + memoryDecimals" type="area" height="180" :options="memoryOptions" :series="memoryData"></VueApexCharts>
             </v-col>
         </v-row>
         <v-row>
@@ -69,7 +69,7 @@
           -->
             <v-col cols="12" sm="12" md="12">
                 CPU usage
-                <VueApexCharts :key="'cpu-' + scale + '-' + timezone" type="line" height="180" :options="cpuOptions" :series="cpuDataRate"></VueApexCharts>
+                <VueApexCharts :key="'cpu-' + scale + '-' + timezone + '-' + cpuDecimals" type="line" height="180" :options="cpuOptions" :series="cpuDataRate"></VueApexCharts>
             </v-col>
         </v-row>
         <!--
@@ -83,23 +83,23 @@
         <v-row>
             <v-col cols="12" sm="12" md="12">
                 Responset Time
-                <VueApexCharts :key="'responsetime-' + scale + '-' + timezone" type="area" height="180" :options="ResponsetimeOptions" :series="responsetimeData"></VueApexCharts>
+                <VueApexCharts :key="'responsetime-' + scale + '-' + timezone + '-' + responsetimeDecimals" type="area" height="180" :options="ResponsetimeOptions" :series="responsetimeData"></VueApexCharts>
             </v-col>
         </v-row>
         <v-row>
             <v-col cols="12" sm="12" md="12">
                 Throughput
-                <VueApexCharts :key="'throughput-' + scale + '-' + timezone" type="line" height="180" :options="httpStusCodeOptions" :series="httpStusCodeData"></VueApexCharts>
+                <VueApexCharts :key="'throughput-' + scale + '-' + timezone + '-' + throughputDecimals" type="line" height="180" :options="httpStusCodeOptions" :series="httpStusCodeData"></VueApexCharts>
             </v-col>
         </v-row>
         <v-row>
             <v-col cols="12" sm="12" md="12">
-                <VueApexCharts :key="'httpcode-increase-' + scale + '-' + timezone" type="area" height="180" :options="httpStusCodeIncreaseOptions" :series="httpStusCodeDataIncrease"></VueApexCharts>
+                <VueApexCharts :key="'httpcode-increase-' + scale + '-' + timezone + '-' + throughputDecimals" type="area" height="180" :options="httpStusCodeIncreaseOptions" :series="httpStusCodeDataIncrease"></VueApexCharts>
             </v-col>
         </v-row>
         <v-row>
             <v-col cols="12" sm="12" md="12">
-                <VueApexCharts :key="'traffic-' + scale + '-' + timezone" type="area" height="180" :options="httpResponseTrafficOptions" :series="httpResponseTrafficData"></VueApexCharts>
+                <VueApexCharts :key="'traffic-' + scale + '-' + timezone + '-' + trafficDecimals" type="area" height="180" :options="httpResponseTrafficOptions" :series="httpResponseTrafficData"></VueApexCharts>
             </v-col>
         </v-row>
       </div>
@@ -623,9 +623,15 @@ export default defineComponent({
       timezone: localStorage.getItem('kubero.metricsTimezone') || 'America/Santiago',
       timezoneItems: [
         { title: 'Santiago (Chile continental)', value: 'America/Santiago' },
-        { title: 'Punta Arenas (Magallanes)', value: 'America/Punta_Arenas' },
         { title: 'UTC', value: 'UTC' },
       ] as { title: string, value: string }[],
+      // decimales del eje Y de cada gráfico; se recalculan solos según la
+      // magnitud real de sus datos (ver pickDecimals), no los elige la persona
+      memoryDecimals: 1,
+      cpuDecimals: 1,
+      responsetimeDecimals: 1,
+      throughputDecimals: 1,
+      trafficDecimals: 1,
       timer: null as any,
       // consultas de un ciclo de refresco que aún no terminaron
       pending: 0,
@@ -752,6 +758,24 @@ export default defineComponent({
                 options.xaxis.max = max;
             }
         },
+        // con apps casi sin tráfico los millicores de CPU quedan en 0.0 con un
+        // solo decimal; esto deja elegir cuántos mostrar en el eje Y
+        // cuántos decimales hacen falta para que el valor más grande de la
+        // serie no se vea plano en 0.0 (pasa con apps casi sin tráfico, cuyo
+        // uso de CPU es de milésimas de millicore)
+        pickDecimals(series: { data: number[][] }[]): number {
+            let maxAbs = 0;
+            for (const serie of series || []) {
+                for (const point of serie.data || []) {
+                    maxAbs = Math.max(maxAbs, Math.abs(point[1]));
+                }
+            }
+            if (maxAbs === 0) return 1;
+            if (maxAbs >= 10) return 1;
+            if (maxAbs >= 1) return 2;
+            if (maxAbs >= 0.01) return 3;
+            return 4;
+        },
         startTimer() {
             this.stopTimer();
             this.timer = setInterval(() => {
@@ -794,6 +818,8 @@ export default defineComponent({
             })
             .then((response) => {
                 this.memoryData = markRaw(response.data);
+                this.memoryDecimals = this.pickDecimals(response.data);
+                this.memoryOptions.yaxis.decimalsInFloat = this.memoryDecimals;
             })
             .catch((error) => {
                 console.log(error);
@@ -823,6 +849,9 @@ export default defineComponent({
             .then((response) => {
               this.httpStusCodeData = markRaw(response.data);
               this.httpStusCodeDataIncrease = markRaw(response.data);
+              this.throughputDecimals = this.pickDecimals(response.data);
+              this.httpStusCodeOptions.yaxis.decimalsInFloat = this.throughputDecimals;
+              this.httpStusCodeIncreaseOptions.yaxis.decimalsInFloat = this.throughputDecimals;
             })
             .catch((error) => {
                 console.log(error);
@@ -853,6 +882,8 @@ export default defineComponent({
             })
             .then((response) => {
               this.responsetimeData = response.data;
+              this.responsetimeDecimals = this.pickDecimals(response.data);
+              this.ResponsetimeOptions.yaxis.decimalsInFloat = this.responsetimeDecimals;
             })
             .catch((error) => {
                 console.log(error);
@@ -868,6 +899,8 @@ export default defineComponent({
             })
             .then((response) => {
               this.httpResponseTrafficData = markRaw(response.data);
+              this.trafficDecimals = this.pickDecimals(response.data);
+              this.httpResponseTrafficOptions.yaxis.decimalsInFloat = this.trafficDecimals;
             })
             .catch((error) => {
                 console.log(error);
@@ -898,6 +931,8 @@ export default defineComponent({
             })
             .then((response) => {
               this.cpuDataRate = markRaw(response.data);
+              this.cpuDecimals = this.pickDecimals(response.data);
+              this.cpuOptions.yaxis.decimalsInFloat = this.cpuDecimals;
             })
             .catch((error) => {
                 console.log(error);
